@@ -40247,7 +40247,9 @@ try {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput("time", time);
     // Get the JSON webhook payload for the event that triggered the workflow
     const payload = JSON.stringify(_actions_github__WEBPACK_IMPORTED_MODULE_1__.context.payload, undefined, 2);
-    console.log(`The event payload: ${payload}`);
+    // console.log(`The event payload: ${payload}`);
+    const fileList = fs__WEBPACK_IMPORTED_MODULE_2__.readdirSync('.');
+    console.log(fileList);
     // read workspace.yml
     const workspaceYml = fs__WEBPACK_IMPORTED_MODULE_2__.readFileSync('workspace.yml', 'utf8');
     console.log(workspaceYml);
