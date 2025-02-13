@@ -1,0 +1,32 @@
+version: 1
+components:
+- name: mongo
+  image: mongo:latest
+  ports:
+    mongo:
+      number: 27017
+  env:
+    MONGO_INITDB_ROOT_USERNAME: root
+    MONGO_INITDB_ROOT_PASSWORD: "%MONGO_ROOT_PASSWORD%"
+  volumes:
+    mongoData:
+      mountPath: /data/db
+      size: 1Gi
+
+- name: express
+  image: mongo-express:latest
+  ports:
+    web:
+      number: 8081
+      ingress:
+        subdomain: mongo
+  env:
+    ME_CONFIG_MONGODB_SERVER: mongo
+    ME_CONFIG_MONGODB_PORT: ${mongo.ports.mongo.number}
+    ME_CONFIG_MONGODB_ENABLE_ADMIN: true
+    ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+    ME_CONFIG_MONGODB_ADMINPASSWORD: "%EXPRESS_ADMIN_PASSWORD%"
+  volumes:
+    expressData:
+      mountPath: /data/db
+      size: 1Gi

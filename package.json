@@ -4,7 +4,9 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "ncc build src/index.ts -o dist"
+    "build": "ncc build src/index.ts -o dist",
+    "test": "tsx src/index.ts",
+    "test-k8s": "tsx src/index-k8s.ts"
   },
   "keywords": [],
   "author": "",
@@ -13,11 +15,15 @@
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
+    "@kubernetes/client-node": "^1.0.0",
     "@vercel/ncc": "^0.38.3",
-    "yaml": "^2.7.0"
+    "yaml": "^2.7.0",
+    "zod": "^3.24.2",
+    "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
 }
