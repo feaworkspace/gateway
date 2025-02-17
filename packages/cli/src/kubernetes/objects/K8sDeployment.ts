@@ -1,7 +1,7 @@
-import { NamedPort, Port } from "../../config/WorkspaceConfigTypes.js";
-import K8sConfigMap from "./K8sConfigMap.js";
-import K8sPersistentVolumeClaim from "./K8sPersistentVolumeClaim.js";
-import K8sResource from "./K8sResource.js";
+import { NamedPort, Port } from "../../config/WorkspaceConfigTypes";
+import K8sConfigMap from "./K8sConfigMap";
+import K8sPersistentVolumeClaim from "./K8sPersistentVolumeClaim";
+import K8sResource from "./K8sResource";
 
 export default class K8sDeployment extends K8sResource {
     public readonly ports: NamedPort[];

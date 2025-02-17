@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as yaml from 'yaml';
-import { Include, MergedYamlConfig, yamlComponentsSchema, YamlConfig, yamlConfigSchema, YamlTemplate, yamlTemplateSchema } from './WorkspaceConfigTypes.js';
-import WorkspaceConfig from './WorkspaceConfig.js';
+import { Include, MergedYamlConfig, yamlComponentsSchema, YamlConfig, yamlConfigSchema, YamlTemplate, yamlTemplateSchema } from './WorkspaceConfigTypes';
+import WorkspaceConfig from './WorkspaceConfig';
 
 export default class WorkspaceConfigRenderer {
     private static readonly VARIABLE_REGEX = /\${(?<variable>[^}:]+(:(?<default_value>[^}]+))?)}/g;

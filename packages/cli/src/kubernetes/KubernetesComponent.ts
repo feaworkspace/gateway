@@ -1,9 +1,9 @@
-import { Component, MergedYamlConfig } from "../config/WorkspaceConfigTypes.js";
-import K8sConfigMap from "./objects/K8sConfigMap.js";
-import K8sDeployment from "./objects/K8sDeployment.js";
-import K8sPersistentVolumeClaim from "./objects/K8sPersistentVolumeClaim.js";
-import K8sResource from "./objects/K8sResource.js";
-import K8sService from "./objects/K8sService.js";
+import { Component, MergedYamlConfig } from "../config/WorkspaceConfigTypes";
+import K8sConfigMap from "./objects/K8sConfigMap";
+import K8sDeployment from "./objects/K8sDeployment";
+import K8sPersistentVolumeClaim from "./objects/K8sPersistentVolumeClaim";
+import K8sResource from "./objects/K8sResource";
+import K8sService from "./objects/K8sService";
 
 export interface KubernetesComponentConfig extends Component {
     namespace: string;

@@ -1,7 +1,18 @@
-import WorkspaceConfigRenderer from './config/WorkspaceConfigRenderer.js';
+import WorkspaceConfigRenderer from './config/WorkspaceConfigRenderer';
 import { fromError } from 'zod-validation-error';
-import KubernetesWorkspace from './kubernetes/KubernetesWorkspace.js';
+import KubernetesWorkspace from './kubernetes/KubernetesWorkspace';
 import * as yaml from 'yaml'
+import * as dotenv from 'dotenv';
+import lib from "./lib/test";
+
+dotenv.config();
+
+const isDev = process.env['NODE_ENV'] === 'development';
+if(isDev) {
+    process.chdir("../../");
+}
+
+console.log(lib());
 
 try {
     const configRenderer = new WorkspaceConfigRenderer('workspace.yml');

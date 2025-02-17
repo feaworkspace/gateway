@@ -1,4 +1,4 @@
-import K8sResource from "./K8sResource.js";
+import K8sResource from "./K8sResource";
 
 export default class K8sConfigMap extends K8sResource {
     public constructor({ name, namespace, data}: {name: string, namespace: string, data: { [key: string]: any }}) {

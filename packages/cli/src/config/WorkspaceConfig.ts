@@ -1,4 +1,4 @@
-import { Component, MergedYamlConfig, Repository } from "./WorkspaceConfigTypes.js";
+import { Component, MergedYamlConfig, Repository } from "./WorkspaceConfigTypes";
 import * as yaml from 'yaml';
 
 export default class WorkspaceConfig {

@@ -1,5 +1,5 @@
-import K8sDeployment from "./K8sDeployment.js";
-import K8sResource from "./K8sResource.js";
+import K8sDeployment from "./K8sDeployment";
+import K8sResource from "./K8sResource";
 
 export default class K8sService extends K8sResource {
     public constructor({ name, namespace, deployment }: {name: string, namespace: string, deployment: K8sDeployment}) {
