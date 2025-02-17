@@ -1,6 +1,5 @@
 version: 1
 namespace: ppbo
-workspace: app # Name of the component to use as workspace
 domain: ppbo.ws.feavy.fr
 subdomainFormat: "%s-" # %s will be replaced by the subdomain
 nodeSelector:
@@ -8,17 +7,19 @@ nodeSelector:
 repositories: # Repositories to clone in the workspace
   - url: https://github.com/Feavy/ppbo.git
     branch: main
-components:
-  - name: app
-    image: oven/bun:latest
-    ports:
-      web:
-        number: 8080
-        ingress:
-      api:
-        number: 8181
-        ingress:
-          path: /api
+workspace:
+  initScripts:
+    - include: ./scripts/install/java.yml
+    - include: ./scripts/install/bun.yml
+  ports:
+    web:
+      number: 8080
+      ingress:
+    api:
+      number: 8181
+      ingress:
+        path: /api
+dependencies:
   - include: ./templates/mongo.yml
     override:
       mongo.volumes.mongoData.size: 10Gi

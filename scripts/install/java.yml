@@ -1,0 +1,6 @@
+title: Install Java
+env:
+  JAVA_VERSION: 17
+script: |
+  apt-get update
+  apt-get install -y openjdk-${JAVA_VERSION}-jdk
