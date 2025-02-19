@@ -3,13 +3,19 @@ namespace: ppbo
 domain: ppbo.ws.feavy.fr
 subdomainFormat: "%s-" # %s will be replaced by the subdomain
 nodeSelector:
-  kubernetes.io/hostname: 'contabo'
+  kubernetes.io/hostname: "contabo"
 repositories: # Repositories to clone in the workspace
   - url: https://github.com/Feavy/ppbo.git
     branch: main
-workspace:
+secrets:
+  DISCORD_TOKEN: "{{ env.DISCORD_TOKEN }}" # Take DISCORD_TOKEN from env vars
+  DB_PASSWORD: "{{ randomPassword() }}"
+  ADMIN_PASSWORD: "{{ randomPassword() }}"
+app:
   initScripts:
     - include: ./scripts/install/java.yml
+      args:
+        version: "17"
     - include: ./scripts/install/bun.yml
   ports:
     web:
@@ -19,7 +25,19 @@ workspace:
       number: 8181
       ingress:
         path: /api
+  env:
+    DB_HOST: "{{ host('database.mongo') }}"
+    DB_PASSWORD: "{{ secrets.DB_PASSWORD }}"
 dependencies:
-  - include: ./templates/mongo.yml
-    override:
-      mongo.volumes.mongoData.size: 10Gi
+  database:
+    include: ./templates/mongo.yml
+    args:
+      mongo_password: "{{ secrets.DB_PASSWORD }}"
+      express_password: "{{ secrets.ADMIN_PASSWORD }}"
+    components:
+      mongo:
+        volumes.mongoData.size: 10Gi
+  discord-bot:
+    image: x
+    env:
+      DISCORD_TOKEN: "{{ secrets.DISCORD_TOKEN }}"

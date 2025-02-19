@@ -1,13 +1,13 @@
-import { MergedYamlConfig } from "../config/WorkspaceConfigTypes";
 import * as k8s from '@kubernetes/client-node';
 import K8sNamespace from "./objects/K8sNamespace";
 import K8sResource from "./objects/K8sResource";
 import KubernetesComponent from "./KubernetesComponent";
+import {WorkspaceConfig} from "../config/types/WorkspaceConfig";
 
 export default class KubernetesWorkspace {
     // private k8sApi: k8s.CoreV1Api;
 
-    public constructor(private readonly config: MergedYamlConfig) {
+    public constructor(private readonly config: WorkspaceConfig) {
         // const kc = new k8s.KubeConfig();
         // kc.loadFromDefault();
         

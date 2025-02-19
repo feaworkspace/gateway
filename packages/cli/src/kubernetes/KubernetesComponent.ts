@@ -1,12 +1,14 @@
-import { Component, MergedYamlConfig } from "../config/WorkspaceConfigTypes";
 import K8sConfigMap from "./objects/K8sConfigMap";
 import K8sDeployment from "./objects/K8sDeployment";
 import K8sPersistentVolumeClaim from "./objects/K8sPersistentVolumeClaim";
 import K8sResource from "./objects/K8sResource";
 import K8sService from "./objects/K8sService";
+import {WorkspaceComponent} from "../config/types/WorkspaceConfig";
 
-export interface KubernetesComponentConfig extends Component {
+export interface KubernetesComponentConfig extends WorkspaceComponent {
+    name: string
     namespace: string;
+    image: string;
     nodeSelector?: { [key: string]: string };
 }
 
@@ -36,7 +38,7 @@ export default class KubernetesComponent {
             name: formattedName,
             namespace: this.config.namespace,
             image: this.config.image,
-            ports: Object.entries(this.config.ports).map(([name, port]) => ({ name, ...port })) as any,
+            ports: this.config.ports,
             nodeSelector: this.config.nodeSelector,
             configMap,
             persistentVolumeClaims
