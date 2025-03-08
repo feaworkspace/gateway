@@ -28,16 +28,16 @@ export default class YamlRenderer {
 
     public preRenderOrFail(prop: string) {
         // @ts-ignore
-        this.yaml[prop] = this.renderVariables(this.yaml[prop], "fail");
+        this.yaml[prop] = this.renderVariables(this.yaml[prop], prop, "fail");
         return this;
     }
 
     public render() {
-        return this.renderVariables(this.yaml);
+        return this.renderVariables(this.yaml, "");
     }
 
     public renderOrFail() {
-        return this.renderVariables(this.yaml, "fail");
+        return this.renderVariables(this.yaml, "", "fail");
     }
 
     private overrideObject(object: any, override: any) {
@@ -59,18 +59,19 @@ export default class YamlRenderer {
         return object;
     }
 
-    private renderVariables(object: any, ifUndefined: "let" | "fail" = "let") {
+    private renderVariables(object: any, path: string, ifUndefined: "let" | "fail" = "let") {
         if (typeof object === 'string') {
             return object.replace(YamlRenderer.VARIABLE_REGEX, (match, variable) => {
                 // console.log("  ", variable, "->", this.variables.evaluateOrLet(variable));
-                return this.evaluate(variable, ifUndefined);
+                return this.evaluate(variable, path, ifUndefined);
             });
         } else if (typeof object === 'object') {
             for (const key in object) {
-                if (typeof object[key] === 'string') {
-                    object[key] = this.renderVariables(object[key], ifUndefined);
-                } else if (typeof object[key] === 'object') {
-                    object[key] = this.renderVariables(object[key], ifUndefined);
+                const subPath = path.length === 0 ? key : path + "." + key;
+                if (typeof object[key] === 'object') {
+                    object[key] = this.renderVariables(object[key], subPath, ifUndefined);
+                } else {
+                    object[key] = this.renderVariables(object[key].toString(), subPath, ifUndefined);
                 }
             }
             return object;
@@ -81,7 +82,7 @@ export default class YamlRenderer {
         return get(this.yaml, accessor);
     }
 
-    public evaluate(variable: string, ifUndefined: "let" | "fail" = "let") {
+    public evaluate(variable: string, path: string, ifUndefined: "let" | "fail" = "let") {
         variable = this.processAccessor(variable);
         for(const regex of this.excludedFromEvaluation) {
             if(variable.match(regex)) {
@@ -90,7 +91,7 @@ export default class YamlRenderer {
         }
         if(variable.includes("(")) {
             try {
-                const fn = new Function('functions', `return functions.${variable}`);
+                const fn = new Function('functions', `return functions.${variable}("${path}")`);
                 return fn(this.functions);
             } catch (e) {
             }

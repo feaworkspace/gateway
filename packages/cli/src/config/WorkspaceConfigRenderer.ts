@@ -23,7 +23,7 @@ export default class WorkspaceConfigRenderer {
         const renderedConfig = YamlRenderer.fromObject(this.ymlConfig)
             .with({ env: process.env })
             .withFunction("randomPassword", this.randomPassword)
-            .withFunction("host", this.host.bind(this))
+            .withFunction("host", this.host)
             .excludeFromEvaluation("secrets.*")
             .preRenderOrFail("secrets")
             .renderOrFail();
@@ -61,12 +61,14 @@ export default class WorkspaceConfigRenderer {
     }
 
 
-    public randomPassword(length: number = 32) {
+    public randomPassword = (length: number = 32) => (path: string) => {
+        // TODO reuse existing password from secrets if it exists
         const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        console.log("Generating random password for", path);
         return Array.from({ length }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
     }
 
-    public host(host: string) {
+    public host = (host: string) => (path: string) => {
         return `${host.replace(".", "-")}.${this.ymlConfig.namespace}.svc.cluster.local`;
     }
 }
