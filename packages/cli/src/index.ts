@@ -3,7 +3,12 @@ import { fromError } from 'zod-validation-error';
 import KubernetesWorkspace from './kubernetes/KubernetesWorkspace';
 import * as yaml from 'yaml'
 import * as dotenv from 'dotenv';
-import lib from "./lib/test";
+import { lib } from "lib";
+
+/*
+CLI Parameters:
+--regenerate -r: Regenerate passwords
+ */
 
 dotenv.config();
 

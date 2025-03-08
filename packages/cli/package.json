@@ -19,6 +19,7 @@
     "@vercel/ncc": "^0.38.3",
     "yaml": "^2.7.0",
     "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0"
+    "zod-validation-error": "^3.4.0",
+    "lib": "workspace:*"
   }
 }
