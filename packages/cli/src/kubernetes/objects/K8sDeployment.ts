@@ -2,13 +2,14 @@ import K8sConfigMap from "./K8sConfigMap";
 import K8sPersistentVolumeClaim from "./K8sPersistentVolumeClaim";
 import K8sResource from "./K8sResource";
 import {NamedPort} from "../../config/types/WorkspaceConfig";
+import K8sSecret from "./K8sSecret";
 
 export default class K8sDeployment extends K8sResource {
     public readonly ports: NamedPort[];
 
     public constructor(
-        {name, namespace, image, ports, nodeSelector, configMap, persistentVolumeClaims}:
-        {name: string, namespace: string, image: string, ports: NamedPort[], nodeSelector?: Record<string, string>, configMap?: K8sConfigMap, persistentVolumeClaims?: K8sPersistentVolumeClaim[]}
+        {name, namespace, image, ports, nodeSelector, configMap, secret, persistentVolumeClaims}:
+        {name: string, namespace: string, image: string, ports: NamedPort[], nodeSelector?: Record<string, string>, configMap?: K8sConfigMap, secret?: K8sSecret, persistentVolumeClaims?: K8sPersistentVolumeClaim[]}
     ) {
         super({
             apiVersion: 'apps/v1',
@@ -37,6 +38,7 @@ export default class K8sDeployment extends K8sResource {
                                 name: port.name
                             })),
                             ...(configMap ? {envFrom: [{configMapRef: {name: configMap.name}}] } : {}),
+                            ...(secret ? {envFrom: [{secretRef: {name: secret.name}}] } : {}),
                             ...(persistentVolumeClaims?.length ? {volumeMounts: persistentVolumeClaims.map(pvc => ({
                                 name: pvc.name,
                                 mountPath: pvc.mountPath

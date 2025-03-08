@@ -10,7 +10,5 @@ export interface DependencyFileYaml {
 export const dependencyFileSchema = z.object({
     version: z.number(),
     args: z.record(z.string().nullable()).optional(),
-    components: z.record(componentSchema.extend({
-        image: z.string(),
-    })),
+    components: z.record(componentSchema),
 });

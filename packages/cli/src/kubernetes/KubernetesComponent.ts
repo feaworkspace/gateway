@@ -4,25 +4,25 @@ import K8sPersistentVolumeClaim from "./objects/K8sPersistentVolumeClaim";
 import K8sResource from "./objects/K8sResource";
 import K8sService from "./objects/K8sService";
 import {WorkspaceComponent} from "../config/types/WorkspaceConfig";
-
-export interface KubernetesComponentConfig extends WorkspaceComponent {
-    name: string
-    namespace: string;
-    image: string;
-    nodeSelector?: { [key: string]: string };
-}
+import K8sSecret from "./objects/K8sSecret";
 
 export default class KubernetesComponent {
-    public constructor(private readonly config: KubernetesComponentConfig) {
+    public constructor(private readonly config: WorkspaceComponent) {
     }
 
     public getResources(): K8sResource[] {
         const formattedName = this.format(this.config.name);
 
-        const configMap = this.config.env ? new K8sConfigMap({
+        const configMap = this.config.config ? new K8sConfigMap({
             name: `${formattedName}-config`,
             namespace: this.config.namespace,
-            data: this.config.env
+            data: this.config.config
+        }) : undefined;
+
+        const secret = this.config.secrets ? new K8sSecret({
+            name: `${formattedName}-secret`,
+            namespace: this.config.namespace,
+            data: this.config.secrets
         }) : undefined;
 
         const persistentVolumeClaims = (Object.entries(this.config.volumes || {})).map(([name, volume]) => new K8sPersistentVolumeClaim({
@@ -41,6 +41,7 @@ export default class KubernetesComponent {
             ports: this.config.ports,
             nodeSelector: this.config.nodeSelector,
             configMap,
+            secret,
             persistentVolumeClaims
         });
 
@@ -50,7 +51,7 @@ export default class KubernetesComponent {
             deployment
         });
 
-        return [configMap, ...persistentVolumeClaims, deployment, service].filter(resource => resource !== undefined);
+        return [configMap, secret, ...persistentVolumeClaims, deployment, service].filter(resource => resource !== undefined);
     }
 
     /**
@@ -58,6 +59,6 @@ export default class KubernetesComponent {
      * Converts camelCase to kebab-case.
      */
     public format(name: string): string {
-        return name.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^-/, "");
+        return name.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/\./g, "-").replace(/^-/, "");
     }
 }

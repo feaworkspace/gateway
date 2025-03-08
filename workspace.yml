@@ -21,10 +21,12 @@ app:
     web:
       number: 8080
       ingress:
+        auth: false
     api:
       number: 8181
       ingress:
         path: /api
+        auth: false
   env:
     DB_HOST: "{{ host('database.mongo') }}"
     DB_PASSWORD: "{{ secrets.DB_PASSWORD }}"

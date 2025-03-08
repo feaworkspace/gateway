@@ -16,6 +16,7 @@ export interface Port {
 export interface Ingress {
     subdomain?: string;
     path?: string;
+    auth?: boolean;
 }
 
 export interface Volume {
@@ -31,6 +32,7 @@ export const componentSchema = z.object({
         ingress: z.object({
             subdomain: z.string().optional(),
             path: z.string().optional(),
+            auth: z.boolean().default(true),
         }).optional().nullable(),
     })).optional(),
     env: z.record(z.any()).optional(),

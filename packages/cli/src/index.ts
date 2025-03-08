@@ -18,10 +18,11 @@ try {
     const configRenderer = new WorkspaceConfigRenderer('workspace.yml');
     const workspaceConfig = configRenderer.render();
 
+    // console.log(yaml.stringify(workspaceConfig));
+
     const kubernetesWorkspace = new KubernetesWorkspace(workspaceConfig);
     const resources = kubernetesWorkspace.getResources();
     console.log(resources.map(resource => yaml.stringify(resource.config)).join('---\n'));
-    // console.log(workspaceConfig.toYaml());
 } catch (error: any) {
     const validationError = fromError(error);
     console.error(error);

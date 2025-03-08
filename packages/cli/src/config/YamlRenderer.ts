@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { get, set } from '../utils/ObjectUtils';
 
 export default class YamlRenderer {
-    public static readonly VARIABLE_REGEX = /\{{ *(?<variable>[^ }]+) *}}/g;
+    public static readonly VARIABLE_REGEX = /\{\{ *(?<variable>[^ }]+) *}}/gi;
     private functions: Record<string, Function> = {};
     private excludedFromEvaluation: string[] = [];
 
