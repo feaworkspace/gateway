@@ -30,7 +30,11 @@ export interface WorkspaceConfig {
     components: Array<WorkspaceComponent>;
 }
 
-export function componentToWorkspaceComponent(component: Component, name: string, namespace: string): WorkspaceComponent {
+export function componentToWorkspaceComponent(component: Component, name: string, namespace: string, secrets: Record<string, string> = {}): WorkspaceComponent {
+    function isSecret(value: string): boolean {
+        return Object.values(secrets).includes(value);
+    }
+
     const {ports, env, ...rest} = component;
     return {
         ...rest,
@@ -40,9 +44,4 @@ export function componentToWorkspaceComponent(component: Component, name: string
         secrets: Object.entries(env || {}).filter(([_, value]) => isSecret(value)).reduce((acc, [key, value]) => ({...acc, [key]: value}), {}),
         ports: Object.entries(component.ports || {}).map(([name, port]) => ({...port, name})),
     };
-}
-
-function isSecret(value: string): boolean {
-    const match = value.toString().matchAll(YamlRenderer.VARIABLE_REGEX);
-    return match.some((m) => m[1].startsWith('secrets.'));
 }

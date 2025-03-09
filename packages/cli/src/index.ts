@@ -1,9 +1,10 @@
 import WorkspaceConfigRenderer from './config/WorkspaceConfigRenderer';
 import { fromError } from 'zod-validation-error';
 import KubernetesWorkspace from './kubernetes/KubernetesWorkspace';
-import * as yaml from 'yaml'
+import * as yaml from 'yaml';
 import * as dotenv from 'dotenv';
 import { lib } from "lib";
+import KubernetesClient from "./kubernetes/KubernetesClient";
 
 /*
 CLI Parameters:
@@ -19,17 +20,26 @@ if(isDev) {
 
 console.log(lib());
 
-try {
-    const configRenderer = new WorkspaceConfigRenderer('workspace.yml');
-    const workspaceConfig = configRenderer.render();
+(async () => {
+    try {
+        const configRenderer = new WorkspaceConfigRenderer('workspace.yml');
+        const client = new KubernetesClient(configRenderer.ymlConfig.namespace);
+        let existingSecret: Record<string, string> = {};
+        if(!process.argv.includes('--regenerate') && await client.workspaceExists()) {
+            const secret = await client.getSecret('feaspace-secrets');
+            if(secret) existingSecret = secret.stringData;
+        }
 
-    // console.log(yaml.stringify(workspaceConfig));
+        const workspaceConfig = configRenderer.render(existingSecret);
 
-    const kubernetesWorkspace = new KubernetesWorkspace(workspaceConfig);
-    const resources = kubernetesWorkspace.getResources();
-    console.log(resources.map(resource => yaml.stringify(resource.config)).join('---\n'));
-} catch (error: any) {
-    const validationError = fromError(error);
-    console.error(error);
-    console.error(validationError.toString());
-}
+        // console.log(yaml.stringify(workspaceConfig));
+
+        const kubernetesWorkspace = new KubernetesWorkspace(workspaceConfig);
+        const resources = kubernetesWorkspace.getResources();
+        // console.log(resources.map(resource => yaml.stringify(resource.config)).join('---\n'));
+    } catch (error: any) {
+        const validationError = fromError(error);
+        console.error(error);
+        console.error(validationError.toString());
+    }
+})();

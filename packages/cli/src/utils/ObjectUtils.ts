@@ -36,3 +36,17 @@ export function toArray(object: Record<string, any>, keyName: string = 'key') {
     }
     return Object.entries(object).map(([key, value]) => ({ [keyName]: key, ...value }));
 }
+
+export function merge(target: any, source: any) {
+    for (const key in source) {
+        if (typeof source[key] === "object") {
+            if (!target[key]) {
+                Object.assign(target, { [key]: {} });
+            }
+            merge(target[key], source[key]);
+        } else {
+            Object.assign(target, { [key]: source[key] });
+        }
+    }
+    return target;
+}

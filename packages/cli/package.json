@@ -6,6 +6,7 @@
   "scripts": {
     "build": "ncc build src/index.ts -o dist",
     "dev": "tsx src/index.ts --mode development",
+    "test": "tsx src/test.ts --mode development",
     "test-k8s": "tsx src/index-k8s.ts"
   },
   "keywords": [],
