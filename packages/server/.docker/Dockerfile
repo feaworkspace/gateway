@@ -66,12 +66,22 @@ RUN curl -L https://raw.github.com/git/git/master/contrib/completion/git-prompt.
     echo "source ~/.bash_git;PS1='\[\033[01;32m\]\u\[\033[00m\] \[\033[01;34m\]\w\[\033[00m\]\$(__git_ps1 \" (%s)\") $ '" >> .bashrc && \
     echo "source ~/.bashrc" >> .bash_profile
 
-COPY --chown=theia:theia default.gitconfig .gitconfig
+COPY --chown=theia:theia .docker/default.gitconfig .gitconfig
 
 ###### END CUSTOMIZATION #################################################################################
 
+###### FEASPACE SERVER ###################################################################################
+
+COPY --chown=theia:theia .output /home/theia/feaspace
+COPY --chown=theia:theia .docker/entrypoint.sh /home/theia/entrypoint.sh
+
+ENV NITRO_PORT=3001
+EXPOSE 3001
+
+###### END FEASPACE SERVER ##############################################################################
+
 # Launch the backend application via node
-ENTRYPOINT [ "node", "/home/theia/applications/browser/lib/backend/main.js" ]
+ENTRYPOINT [ "/home/theia/entrypoint.sh" ]
 
 # Arguments passed to the application
 CMD [ "/workspace", "--hostname=0.0.0.0" ]
