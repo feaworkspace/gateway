@@ -4,6 +4,10 @@ FROM ghcr.io/eclipse-theia/theia-ide/theia-ide:1.59.1
 
 # Inspired by gitpod base image: https://github.com/gitpod-io/workspace-images/blob/main/base/Dockerfile
 
+LABEL org.opencontainers.image.source=https://github.com/feavy/workspace
+LABEL org.opencontainers.image.description="Workspace Server Docker Image"
+LABEL org.opencontainers.image.licenses=MIT
+
 USER root
 
 RUN apt-get -y update && \
@@ -70,15 +74,15 @@ COPY --chown=theia:theia .docker/default.gitconfig .gitconfig
 
 ###### END CUSTOMIZATION #################################################################################
 
-###### FEASPACE SERVER ###################################################################################
+###### WORKSPACE SERVER ###################################################################################
 
-COPY --chown=theia:theia .output /home/theia/feaspace
+COPY --chown=theia:theia .output /home/theia/workspace
 COPY --chown=theia:theia .docker/entrypoint.sh /home/theia/entrypoint.sh
 
 ENV NITRO_PORT=3001
 EXPOSE 3001
 
-###### END FEASPACE SERVER ##############################################################################
+###### END WORKSPACE SERVER ##############################################################################
 
 # Launch the backend application via node
 ENTRYPOINT [ "/home/theia/entrypoint.sh" ]

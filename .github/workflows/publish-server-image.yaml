@@ -65,4 +65,4 @@ jobs:
         context: ./packages/server
         file: ./packages/server/.docker/Dockerfile
         push: true
-        tags: ghcr.io/feavy/workspace/feaspace:latest
+        tags: ghcr.io/feavy/workspace/workspace-server:latest

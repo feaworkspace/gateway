@@ -26,7 +26,7 @@ console.log(lib());
         const client = new KubernetesClient(configRenderer.ymlConfig.namespace);
         let existingSecret: Record<string, string> = {};
         if(!process.argv.includes('--regenerate') && await client.workspaceExists()) {
-            const secret = await client.getSecret('feaspace-secrets');
+            const secret = await client.getSecret('workspace-secrets');
             if(secret) existingSecret = secret.stringData;
         }
 
