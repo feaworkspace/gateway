@@ -6,6 +6,7 @@ export interface WorkspaceFileYaml {
   namespace: string;
   domain: string;
   subdomainFormat: string;
+  users: string[];
   nodeSelector?: Record<string, string>;
   repositories: Repository[];
   secrets?: Record<string, string>;
@@ -57,6 +58,7 @@ export const workspaceSchema = z.object({
   namespace: z.string(),
   domain: z.string(),
   subdomainFormat: z.string(),
+  users: z.array(z.string()),
   nodeSelector: z.record(z.string()).optional(),
   repositories: z.array(z.object({
     url: z.string(),

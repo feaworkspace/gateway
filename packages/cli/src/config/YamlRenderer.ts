@@ -1,11 +1,16 @@
-import * as yaml from 'yaml';
+import * as YAML from 'yaml';
 import * as z from 'zod';
 import * as fs from 'fs';
 import { get, set } from '../utils/ObjectUtils';
 
 export default class YamlRenderer {
     public static readonly VARIABLE_REGEX = /\{\{ *(?<variable>[^ }]+) *}}/gi;
-    private functions: Record<string, Function> = {};
+    private functions: Record<string, Function> = {
+        readFile: fs.readFileSync,
+        parseYaml: YAML.parse,
+        parseJson: JSON.parse
+    };
+
     private excludedFromEvaluation: string[] = [];
 
     public constructor(private yaml: any) {
@@ -61,17 +66,22 @@ export default class YamlRenderer {
 
     private renderVariables(object: any, path: string, ifUndefined: "let" | "fail" = "let") {
         if (typeof object === 'string') {
-            return object.replace(YamlRenderer.VARIABLE_REGEX, (match, variable) => {
-                // console.log("  ", variable, "->", this.variables.evaluateOrLet(variable));
-                return this.evaluate(variable, path, ifUndefined);
-            });
+            const matches = object.matchAll(YamlRenderer.VARIABLE_REGEX);
+            for (const match of matches) {
+                if(match[0] === object) {
+                    return this.evaluate(match.groups!["variable"], path, ifUndefined);
+                } else {
+                    object = object.replace(match[0], this.evaluate(match.groups!["variable"], path, ifUndefined));
+                }
+            }
+            return object;
         } else if (typeof object === 'object') {
             for (const key in object) {
                 const subPath = path.length === 0 ? key : path + "." + key;
                 if (typeof object[key] === 'object') {
                     object[key] = this.renderVariables(object[key], subPath, ifUndefined);
-                } else {
-                    object[key] = this.renderVariables(object[key].toString(), subPath, ifUndefined);
+                } else if(typeof object[key] === 'string') {
+                    object[key] = this.renderVariables(object[key], subPath, ifUndefined);
                 }
             }
             return object;
@@ -89,12 +99,9 @@ export default class YamlRenderer {
                 return `{{ ${variable} }}`;
             }
         }
-        if(variable.includes("(")) {
-            try {
-                const fn = new Function('functions', `return functions.${variable}("${path}")`);
-                return fn(this.functions);
-            } catch (e) {
-            }
+        if(variable.match(/^[a-zA-Z]+\([^)]*\)$/)) {
+            const fn = new Function('functions', `const res = functions.${variable}; return typeof res === "function" ? res("${path}") : res;`);
+            return fn(this.functions);
         }
 
         const value = this.get(variable);
@@ -113,7 +120,7 @@ export default class YamlRenderer {
 
     public static fromFile(fileName: string, schema?: z.ZodObject<any>) {
         const fileContent = fs.readFileSync(fileName, 'utf8');
-        let yml = yaml.parse(fileContent);
+        let yml = YAML.parse(fileContent);
         if(schema) {
             yml = schema.parse(yml);
         }

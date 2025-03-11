@@ -4,6 +4,7 @@ domain: ppbo.ws.feavy.fr
 subdomainFormat: "%s-" # %s will be replaced by the subdomain
 nodeSelector:
   kubernetes.io/hostname: "contabo"
+users: "{{ parseYaml('[test@gmail.com]')}}"
 repositories: # Repositories to clone in the workspace
   - url: https://github.com/Feavy/ppbo.git
     branch: main

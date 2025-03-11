@@ -18,16 +18,14 @@ export default class WorkspaceConfigRenderer {
 
     public render(existingSecrets: Record<string, string>) {
         this.existingSecrets = existingSecrets;
+
+        this.ymlConfig = this.renderYaml(this.ymlConfig);
         this.ymlConfig = workspaceSchema.parse(this.ymlConfig);
+
         this.ymlConfig.app.initScripts = this.ymlConfig.app.initScripts.map((script) => "include" in script ? this.renderScriptInclude(script) : script);
         this.ymlConfig.dependencies = Object.fromEntries(Object.entries(this.ymlConfig.dependencies).flatMap(([key, value]) => "include" in value ? this.renderDependencyInclude(value, key) : [[key, value]]));
 
-        const renderedConfig = YamlRenderer.fromObject(this.ymlConfig)
-            .with({ env: process.env })
-            .withFunction("randomPassword", this.randomPassword)
-            .withFunction("host", this.host)
-            .preRenderOrFail("secrets")
-            .renderOrFail();
+        this.ymlConfig = this.renderYaml(this.ymlConfig);
 
         const config: WorkspaceConfig = {
             version: this.ymlConfig.version,
@@ -36,7 +34,7 @@ export default class WorkspaceConfigRenderer {
             subdomainFormat: this.ymlConfig.subdomainFormat,
             repositories: this.ymlConfig.repositories,
             nodeSelector: this.ymlConfig.nodeSelector,
-            components: [{...renderedConfig.app, name: "app"}, ...toArray(renderedConfig.dependencies, 'name')].map((component) => componentToWorkspaceComponent(component, component.name, this.ymlConfig.namespace, this.ymlConfig.secrets)),
+            components: [{...this.ymlConfig.app, name: "app"}, ...toArray(this.ymlConfig.dependencies, 'name')].map((component) => componentToWorkspaceComponent(component, component.name, this.ymlConfig.namespace, this.ymlConfig.secrets)),
             secrets: this.ymlConfig.secrets,
         }
 
@@ -61,6 +59,15 @@ export default class WorkspaceConfigRenderer {
         return {title, script};
     }
 
+    private renderYaml(yaml: any) {
+        return YamlRenderer.fromObject(yaml)
+          .with({ env: process.env })
+          .withFunction("randomPassword", this.randomPassword)
+          .withFunction("host", this.host.bind(this))
+          .preRenderOrFail("secrets")
+          .renderOrFail();
+    }
+
 
     public randomPassword = (length: number = 32) => (path: string) => {
         const key = path.replace("secrets.", "");
@@ -71,7 +78,7 @@ export default class WorkspaceConfigRenderer {
         return Array.from({ length }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
     }
 
-    public host = (host: string) => (path: string) => {
+    public host(host: string) {
         return `${host.replace(".", "-")}.${this.ymlConfig.namespace}.svc.cluster.local`;
     }
 }
