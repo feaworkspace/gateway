@@ -5,6 +5,7 @@ import * as yaml from 'yaml';
 import * as dotenv from 'dotenv';
 import { lib } from "lib";
 import KubernetesClient from "./kubernetes/KubernetesClient";
+import {dataValuesFromBase64} from "./kubernetes/utils/base64";
 
 /*
 CLI Parameters:
@@ -27,7 +28,7 @@ console.log(lib());
         let existingSecret: Record<string, string> = {};
         if(!process.argv.includes('--regenerate') && await client.workspaceExists()) {
             const secret = await client.getSecret('workspace-secrets');
-            if(secret) existingSecret = secret.stringData;
+            if(secret) existingSecret = dataValuesFromBase64(secret.data || {});
         }
 
         const workspaceConfig = configRenderer.render(existingSecret);
@@ -36,7 +37,7 @@ console.log(lib());
 
         const kubernetesWorkspace = new KubernetesWorkspace(workspaceConfig);
         const resources = kubernetesWorkspace.getResources();
-        // console.log(resources.map(resource => yaml.stringify(resource.config)).join('---\n'));
+        console.log(resources.map(resource => yaml.stringify(resource)).join('---\n'));
     } catch (error: any) {
         const validationError = fromError(error);
         console.error(error);

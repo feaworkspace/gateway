@@ -1,31 +1,27 @@
-import K8sConfigMap from "./objects/K8sConfigMap";
-import K8sDeployment from "./objects/K8sDeployment";
-import K8sPersistentVolumeClaim from "./objects/K8sPersistentVolumeClaim";
-import K8sResource from "./objects/K8sResource";
-import K8sService from "./objects/K8sService";
 import {WorkspaceComponent} from "../config/types/WorkspaceConfig";
-import K8sSecret from "./objects/K8sSecret";
+import * as K8SUtils from "./utils";
+import K8sObject from "./types/K8sObject";
 
 export default class KubernetesComponent {
     public constructor(private readonly config: WorkspaceComponent) {
     }
 
-    public getResources(): K8sResource[] {
+    public getResources(): Array<K8sObject> {
         const formattedName = this.format(this.config.name);
 
-        const configMap = this.config.config ? new K8sConfigMap({
+        const configMap = this.config.config && K8SUtils.createConfigMap({
             name: `${formattedName}-config`,
             namespace: this.config.namespace,
             data: this.config.config
-        }) : undefined;
+        });
 
-        const secret = this.config.secrets ? new K8sSecret({
+        const secret = this.config.secrets && K8SUtils.createSecret({
             name: `${formattedName}-secret`,
             namespace: this.config.namespace,
-            data: this.config.secrets
-        }) : undefined;
+            stringData: this.config.secrets
+        });
 
-        const persistentVolumeClaims = (Object.entries(this.config.volumes || {})).map(([name, volume]) => new K8sPersistentVolumeClaim({
+        const persistentVolumeClaims = (Object.entries(this.config.volumes || {})).map(([name, volume]) => K8SUtils.createPersistentVolumeClaim({
             name: `${formattedName}-${this.format(name)}`,
             namespace: this.config.namespace,
             accessModes: ["ReadWriteOnce"],
@@ -34,10 +30,11 @@ export default class KubernetesComponent {
             mountPath: volume.mountPath
         }));
 
-        const deployment = new K8sDeployment({
+        const deployment = K8SUtils.createDeployment({
             name: formattedName,
             namespace: this.config.namespace,
             image: this.config.image,
+            replicas: 1,
             ports: this.config.ports,
             nodeSelector: this.config.nodeSelector,
             configMap,
@@ -45,7 +42,7 @@ export default class KubernetesComponent {
             persistentVolumeClaims
         });
 
-        const service = new K8sService({
+        const service = K8SUtils.createService({
             name: formattedName,
             namespace: this.config.namespace,
             deployment
