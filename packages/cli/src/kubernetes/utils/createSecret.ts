@@ -1,5 +1,5 @@
 import {V1Secret} from "@kubernetes/client-node";
-import {dataValuesFromBase64, dataValuesToBase64} from "./base64";
+import {dataValuesToBase64} from "./encoding";
 
 interface SecretDefinition {
   name: string;

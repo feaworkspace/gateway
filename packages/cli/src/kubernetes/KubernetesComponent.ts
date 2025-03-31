@@ -4,6 +4,9 @@ import K8sObject from "./types/K8sObject";
 
 export default class KubernetesComponent {
     public constructor(private readonly config: WorkspaceComponent) {
+        if(config.name === "app") {
+            config.image = "ghcr.io/feavy/workspace/workspace-server:latest";
+        }
     }
 
     public getResources(): Array<K8sObject> {
@@ -42,13 +45,13 @@ export default class KubernetesComponent {
             persistentVolumeClaims
         });
 
-        const service = K8SUtils.createService({
+        let service = this.config.ports?.length && K8SUtils.createService({
             name: formattedName,
             namespace: this.config.namespace,
             deployment
         });
 
-        return [configMap, secret, ...persistentVolumeClaims, deployment, service].filter(resource => resource !== undefined);
+        return [configMap, secret, ...persistentVolumeClaims, deployment, service].filter(Boolean) as K8sObject[];
     }
 
     /**

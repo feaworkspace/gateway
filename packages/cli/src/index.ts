@@ -6,7 +6,7 @@ import * as yaml from 'yaml';
 import * as dotenv from 'dotenv';
 import { lib } from "lib";
 import KubernetesClient from "./kubernetes/KubernetesClient";
-import {dataValuesFromBase64} from "./kubernetes/utils/base64";
+import {dataValuesFromBase64} from "./kubernetes/utils/encoding";
 
 /*
 CLI Parameters:
@@ -38,7 +38,11 @@ console.log(lib());
 
         const kubernetesWorkspace = new KubernetesWorkspace(workspaceConfig);
         const resources = kubernetesWorkspace.getResources();
-        console.log(resources.map(resource => yaml.stringify(resource)).join('---\n'));
+        // console.log(resources.map(resource => yaml.stringify(resource)).join('---\n'));
+
+        console.log("Deploying workspace...");
+        await client.deploy(kubernetesWorkspace);
+        console.log("Workspace deployed successfully!");
     } catch (error: any) {
         const validationError = fromError(error);
         console.error(error);

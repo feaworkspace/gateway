@@ -1,9 +1,10 @@
 import {V1ConfigMap} from "@kubernetes/client-node";
+import { valuesToString } from "./encoding";
 
 interface ConfigMapDefinition {
   name: string;
   namespace: string;
-  data?: Record<string, string>;
+  data: Record<string, any>;
 }
 
 export default function createConfigMap({ name, namespace, data }: ConfigMapDefinition): V1ConfigMap {
@@ -14,6 +15,6 @@ export default function createConfigMap({ name, namespace, data }: ConfigMapDefi
       name,
       namespace,
     },
-    data
+    data: valuesToString(data)
   };
 }

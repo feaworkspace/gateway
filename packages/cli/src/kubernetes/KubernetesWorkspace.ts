@@ -1,7 +1,7 @@
 import KubernetesComponent from "./KubernetesComponent";
 import {WorkspaceConfig} from "../config/types/WorkspaceConfig";
 import K8sObject from "./types/K8sObject";
-import {createNamespace, createServiceAccount} from "./utils";
+import {createNamespace, createSecret, createServiceAccount} from "./utils";
 
 export default class KubernetesWorkspace {
     // private k8sApi: k8s.CoreV1Api;
@@ -36,6 +36,11 @@ export default class KubernetesWorkspace {
                     verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
                 }
             ]
+        }));
+        resources.push(createSecret({
+            name: "workspace-secrets",
+            namespace: this.config.namespace,
+            stringData: this.config.secrets
         }));
         resources.push(...this.config.components.flatMap(component => new KubernetesComponent({
             ...component,

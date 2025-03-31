@@ -1,4 +1,4 @@
-import {V1ConfigMap, V1Deployment, V1PersistentVolumeClaim, V1Secret} from "@kubernetes/client-node";
+import {V1ConfigMap, V1Deployment, V1EnvFromSource, V1PersistentVolumeClaim, V1Secret} from "@kubernetes/client-node";
 import {NamedPort} from "../../config/types/WorkspaceConfig";
 
 interface DeploymentDefinition {
@@ -47,8 +47,7 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
                 name: port.name,
                 protocol: port.protocol || "TCP"
               })),
-              ...definition.configMap && {envFrom: [{configMapRef: {name: definition.configMap.metadata?.name!}}]},
-              ...definition.secret && {envFrom: [{secretRef: {name: definition.secret.metadata?.name!}}]}
+              envFrom: envFrom(definition.configMap, definition.secret)
             }
           ],
           ...definition.persistentVolumeClaims && {
@@ -63,4 +62,15 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
       }
     }
   };
+}
+
+function envFrom(configMap?: V1ConfigMap, secret?: V1Secret): V1EnvFromSource[] {
+  const env = [];
+  if(configMap) {
+    env.push({configMapRef: {name: configMap.metadata?.name!}});
+  }
+  if(secret) {
+    env.push({secretRef: {name: secret.metadata?.name!}});
+  }
+  return env;
 }

@@ -40,7 +40,7 @@ dependencies:
     components:
       mongo:
         volumes.mongoData.size: 10Gi
-  discord-bot:
-    image: x
-    env:
-      DISCORD_TOKEN: "{{ secrets.DISCORD_TOKEN }}"
+  # discord-bot:
+  #   image: x
+  #   env:
+  #     DISCORD_TOKEN: "{{ secrets.DISCORD_TOKEN }}"
