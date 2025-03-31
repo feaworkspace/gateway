@@ -18,9 +18,10 @@
     "@actions/github": "^6.0.0",
     "@kubernetes/client-node": "^1.0.0",
     "@vercel/ncc": "^0.38.3",
+    "dotenv": "^16.4.7",
+    "lib": "workspace:*",
     "yaml": "^2.7.0",
     "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0",
-    "lib": "workspace:*"
+    "zod-validation-error": "^3.4.0"
   }
 }
