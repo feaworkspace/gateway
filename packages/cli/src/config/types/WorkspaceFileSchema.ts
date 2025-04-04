@@ -7,6 +7,7 @@ export interface WorkspaceFileYaml {
   domain: string;
   subdomainFormat: string;
   users: string[];
+  firebaseServiceAccountKey: string;
   nodeSelector?: Record<string, string>;
   repositories: Repository[];
   secrets?: Record<string, string>;
@@ -60,6 +61,7 @@ export const workspaceSchema = z.object({
   subdomainFormat: z.string(),
   users: z.array(z.string()),
   nodeSelector: z.record(z.string()).optional(),
+  firebaseServiceAccountKey: z.string(),
   repositories: z.array(z.object({
     url: z.string(),
     name: z.string().optional(),

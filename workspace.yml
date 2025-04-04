@@ -1,6 +1,6 @@
 version: 1
 namespace: ppbo
-domain: ppbo.ws.feavy.fr
+domain: ppbo.feavy.world
 subdomainFormat: "%s-" # %s will be replaced by the subdomain
 nodeSelector:
   kubernetes.io/hostname: "contabo"
@@ -8,6 +8,8 @@ users: "{{ parseYaml('[test@gmail.com]')}}"
 repositories: # Repositories to clone in the workspace
   - url: https://github.com/Feavy/ppbo.git
     branch: main
+firebaseServiceAccountKey: "{{ readFile('serviceAccountKey.json') }}"
+# sshPrivateKey: "{{ readFile('private.key') }}"
 secrets:
   DISCORD_TOKEN: "{{ env.DISCORD_TOKEN }}" # Take DISCORD_TOKEN from env vars
   DB_PASSWORD: "{{ randomPassword() }}"

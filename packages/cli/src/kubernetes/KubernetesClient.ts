@@ -1,7 +1,8 @@
 import * as k8s from '@kubernetes/client-node';
-import {KubernetesObject} from "@kubernetes/client-node/dist/types";
-import {V1Secret} from "@kubernetes/client-node";
+import { KubernetesObject } from "@kubernetes/client-node/dist/types";
+import { V1Secret } from "@kubernetes/client-node";
 import KubernetesWorkspace from './KubernetesWorkspace';
+import * as yaml from "yaml";
 
 
 export default class KubernetesClient {
@@ -18,14 +19,19 @@ export default class KubernetesClient {
 
   public async deploy(workspace: KubernetesWorkspace) {
     const resources = workspace.getResources();
-    for(const resource of resources) {
-      const existing = await this.getObject(resource.apiVersion!, resource.kind!, resource.metadata?.name!);
-      if(existing) {
-        await this.k8sObjectApi.patch(resource);
-        console.log(`${resource.kind} ${resource.metadata?.name} updated`);
-      } else {
-        await this.k8sObjectApi.create(resource);
-        console.log(`${resource.kind} ${resource.metadata?.name} created`);
+    for (const resource of resources) {
+      try {
+        const existing = await this.getObject(resource.apiVersion!, resource.kind!, resource.metadata?.name!);
+        if (existing) {
+          await this.k8sObjectApi.patch(resource);
+          console.log(`${resource.kind} ${resource.metadata?.name} updated`);
+        } else {
+          await this.k8sObjectApi.create(resource);
+          console.log(`${resource.kind} ${resource.metadata?.name} created`);
+        }
+      } catch (e) {
+        console.log(yaml.stringify(resource));
+        throw e;
       }
     }
   }
@@ -37,10 +43,10 @@ export default class KubernetesClient {
   }
 
   public async getObject<T extends KubernetesObject>(apiVersion: string, kind: string, name: string): Promise<T | undefined> {
-    if(kind === 'Namespace') {
-      return this.try(this.k8sApi.readNamespace({name})) as unknown as T;
+    if (kind === 'Namespace') {
+      return this.try(this.k8sApi.readNamespace({ name })) as unknown as T;
     }
-    return await this.try(this.k8sObjectApi.read({apiVersion, kind, metadata: {name, namespace: this.namespace}})) as unknown as T;
+    return await this.try(this.k8sObjectApi.read({ apiVersion, kind, metadata: { name, namespace: this.namespace } })) as unknown as T;
   }
 
   public async getSecret(name: string): Promise<V1Secret | undefined> {

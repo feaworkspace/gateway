@@ -1,11 +1,12 @@
 import * as fs from 'fs';
 import * as yaml from 'yaml';
-import { DependencyInclude, ScriptInclude, workspaceSchema, WorkspaceFileYaml } from './types/WorkspaceFileSchema';
+import { DependencyInclude, ScriptInclude, workspaceSchema, WorkspaceFileYaml, App } from './types/WorkspaceFileSchema';
 import { dependencyFileSchema } from './types/DependencyFileSchema';
 import { scriptFileSchema } from './types/ScriptFileSchema';
 import YamlRenderer from './YamlRenderer';
 import {map, toArray} from "../utils/ObjectUtils";
 import {componentToWorkspaceComponent, WorkspaceConfig} from "./types/WorkspaceConfig";
+import { Component, Ingress } from './types/ComponentSchema';
 
 export default class WorkspaceConfigRenderer {
     public ymlConfig: WorkspaceFileYaml;
@@ -23,19 +24,24 @@ export default class WorkspaceConfigRenderer {
         this.ymlConfig = workspaceSchema.parse(this.ymlConfig);
 
         this.ymlConfig.app.initScripts = this.ymlConfig.app.initScripts.map((script) => "include" in script ? this.renderScriptInclude(script) : script);
-        this.ymlConfig.dependencies = Object.fromEntries(Object.entries(this.ymlConfig.dependencies).flatMap(([key, value]) => "include" in value ? this.renderDependencyInclude(value, key) : [[key, value]]));
+        this.ymlConfig.dependencies = Object.fromEntries(Object.entries(this.ymlConfig.dependencies)
+                                        .flatMap(([key, value]) => "include" in value ? this.renderDependencyInclude(value, key) : [[key, value]]));
 
         this.ymlConfig = this.renderYaml(this.ymlConfig);
+
+        const components: (Component & { name: string })[] = [{...this.ymlConfig.app, name: "app"}, ...toArray(this.ymlConfig.dependencies, 'name')];
 
         const config: WorkspaceConfig = {
             version: this.ymlConfig.version,
             namespace: this.ymlConfig.namespace,
             domain: this.ymlConfig.domain,
+            firebaseServiceAccountKey: this.ymlConfig.firebaseServiceAccountKey,
             subdomainFormat: this.ymlConfig.subdomainFormat,
             repositories: this.ymlConfig.repositories,
             nodeSelector: this.ymlConfig.nodeSelector,
-            components: [{...this.ymlConfig.app, name: "app"}, ...toArray(this.ymlConfig.dependencies, 'name')].map((component) => componentToWorkspaceComponent(component, component.name, this.ymlConfig.namespace, this.ymlConfig.secrets)),
+            components: components.map((component) => componentToWorkspaceComponent(component, component.name, this.ymlConfig.namespace, this.ymlConfig.secrets)),
             secrets: this.ymlConfig.secrets,
+            ingresses: components.flatMap(component => Object.values(component.ports || {})).map(port => port.ingress).filter(Boolean) as Ingress[]
         }
 
         return config;

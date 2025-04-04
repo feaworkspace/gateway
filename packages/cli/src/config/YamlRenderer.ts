@@ -6,7 +6,7 @@ import { get, set } from '../utils/ObjectUtils';
 export default class YamlRenderer {
     public static readonly VARIABLE_REGEX = /\{\{ *(?<variable>[^ }]+) *}}/gi;
     private functions: Record<string, Function> = {
-        readFile: fs.readFileSync,
+        readFile: (path: string) => fs.readFileSync(path, 'utf8'),
         parseYaml: YAML.parse,
         parseJson: JSON.parse
     };
