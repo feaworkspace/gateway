@@ -1,5 +1,6 @@
 import { getAuth } from "firebase-admin/auth";
 import User from "~/backend/types/User";
+import crypto from "node:crypto";
 
 export default class AuthService {
   private static readonly INSTANCE = new AuthService();
