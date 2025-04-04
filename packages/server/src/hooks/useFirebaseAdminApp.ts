@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase-admin/app';
 import firebase from "firebase-admin";
 
 const firebaseAdminApp = initializeApp({
-  credential: firebase.credential.cert("./serviceAccountKey.json")
+  credential: firebase.credential.applicationDefault()
 });
 
 export function useFirebaseAdminApp() {

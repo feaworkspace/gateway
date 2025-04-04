@@ -79,6 +79,7 @@ COPY --chown=theia:theia .docker/default.gitconfig .gitconfig
 COPY --chown=theia:theia .output /home/theia/workspace
 COPY --chown=theia:theia .docker/entrypoint.sh /home/theia/entrypoint.sh
 
+ENV GOOGLE_APPLICATION_CREDENTIALS=/home/theia/workspace/server/serviceAccountKey.json
 ENV NITRO_PORT=3001
 EXPOSE 3001
 
