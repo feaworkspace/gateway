@@ -7,7 +7,9 @@ import { createIngress } from "./utils";
 export default class KubernetesAppComponent extends KubernetesComponent {
     public constructor(protected config: WorkspaceAppComponent) {
         super(config);
-        config.image = "ghcr.io/feavy/workspace/workspace-server:latest";
+        if(config.tag) {
+            config.image = config.image.split(":")[0] + ":" + config.tag;
+        }
         if(!config.secrets) {
             config.secrets = {};
         }

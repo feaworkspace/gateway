@@ -34,14 +34,24 @@ export default class WorkspaceConfigRenderer {
         const config: WorkspaceConfig = {
             version: this.ymlConfig.version,
             namespace: this.ymlConfig.namespace,
-            domain: this.ymlConfig.domain,
-            firebaseServiceAccountKey: this.ymlConfig.firebaseServiceAccountKey,
-            subdomainFormat: this.ymlConfig.subdomainFormat,
             repositories: this.ymlConfig.repositories,
             nodeSelector: this.ymlConfig.nodeSelector,
-            components: components.map((component) => componentToWorkspaceComponent(component, component.name, this.ymlConfig.namespace, this.ymlConfig.secrets)),
+            app: componentToWorkspaceComponent({
+                ...this.ymlConfig.app,
+                name: "app",
+                namespace: this.ymlConfig.namespace,
+                firebaseServiceAccountKey: this.ymlConfig.firebaseServiceAccountKey,
+                domain: this.ymlConfig.domain,
+                subdomainFormat: this.ymlConfig.subdomainFormat,
+                ingresses: components.flatMap(component => Object.values(component.ports || {})).map(port => port.ingress).filter(Boolean) as Ingress[],
+            }),
+            components: components.map((component) => componentToWorkspaceComponent({
+                ...component,
+                name: component.name,
+                namespace: this.ymlConfig.namespace,
+                secrets: this.ymlConfig.secrets
+            })),
             secrets: this.ymlConfig.secrets,
-            ingresses: components.flatMap(component => Object.values(component.ports || {})).map(port => port.ingress).filter(Boolean) as Ingress[]
         }
 
         return config;

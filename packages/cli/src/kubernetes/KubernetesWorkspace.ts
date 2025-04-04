@@ -43,20 +43,13 @@ export default class KubernetesWorkspace {
             namespace: this.config.namespace,
             stringData: this.config.secrets
         }));
-        resources.push(...this.config.components.flatMap(component =>
-            (component.name === "app" ? new KubernetesAppComponent({
-                ...component,
-                namespace: this.config.namespace,
-                nodeSelector: this.config.nodeSelector,
-                ingresses: this.config.ingresses,
-                firebaseServiceAccountKey: this.config.firebaseServiceAccountKey,
-                subdomainFormat: this.config.subdomainFormat,
-                domain: this.config.domain
-            } as WorkspaceAppComponent) : new KubernetesComponent({
+        resources.push(...this.config.components.flatMap(component => new KubernetesComponent({
                 ...component,
                 namespace: this.config.namespace,
                 nodeSelector: this.config.nodeSelector
-            })).getResources()));
+            }).getResources()));
+        
+        resources.push(...new KubernetesAppComponent(this.config.app).getResources());
         return resources;
     }
 }

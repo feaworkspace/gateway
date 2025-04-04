@@ -6,9 +6,6 @@ export default class KubernetesComponent {
     protected readonly formattedName = this.format(this.config.name);
 
     public constructor(protected readonly config: WorkspaceComponent) {
-        if(config.name === "app") {
-            config.image = "ghcr.io/feavy/workspace/workspace-server:latest";
-        }
     }
 
     public getResources(): Array<K8sObject> {

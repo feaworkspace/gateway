@@ -1,5 +1,6 @@
 import * as z from 'zod';
-import { Component, componentSchema } from "./ComponentSchema";
+import { Component, componentSchema, Ingress } from "./ComponentSchema";
+import Settings from '../../Settings.json';
 
 export interface WorkspaceFileYaml {
   version: number;
@@ -11,7 +12,7 @@ export interface WorkspaceFileYaml {
   nodeSelector?: Record<string, string>;
   repositories: Repository[];
   secrets?: Record<string, string>;
-  app: App;
+  app: AppConfig;
   dependencies: Record<string, Dependency | DependencyInclude>;
 }
 
@@ -21,9 +22,18 @@ export interface Repository {
   branch?: string;
 }
 
-export interface App extends Omit<Component, "image"> {
-  image?: string;
+export interface AppConfig {
+  image: string;
+  tag?: string;
   initScripts: Array<Script | ScriptInclude>;
+}
+
+export interface App extends AppConfig, Component {
+  namespace: string;
+  domain: string;
+  subdomainFormat: string;
+  firebaseServiceAccountKey: string;
+  ingresses: Array<Ingress>;
 }
 
 export interface Script {
@@ -47,7 +57,8 @@ export type DependencyInclude = {
 };
 
 const appSchema = componentSchema.extend({
-  image: z.string().optional(),
+  image: z.string().optional().default(Settings.server.image),
+  tag: z.string().optional().default(Settings.server.tag),
   initScripts: z.array(z.object({
     include: z.string(),
     args: z.record(z.string()).optional(),

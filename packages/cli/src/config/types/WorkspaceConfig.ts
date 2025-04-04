@@ -1,6 +1,5 @@
 import { App, Repository } from "./WorkspaceFileSchema";
 import { Component, Ingress, Port } from "./ComponentSchema";
-import YamlRenderer from "../YamlRenderer";
 
 export interface NamedPort extends Port {
     name: string;
@@ -15,8 +14,10 @@ export interface WorkspaceComponent extends Omit<Omit<Component, 'ports'>, 'env'
     secrets?: Record<string, string>;
 }
 
-export interface WorkspaceAppComponent extends Omit<WorkspaceComponent, "name"> {
+export interface WorkspaceAppComponent extends Omit<Omit<WorkspaceComponent, "name">, "image"> {
     name: "app";
+    image: string;
+    tag: string;
     domain: string;
     firebaseServiceAccountKey: string;
     subdomainFormat: string;
@@ -26,22 +27,25 @@ export interface WorkspaceAppComponent extends Omit<WorkspaceComponent, "name"> 
 export interface WorkspaceConfig {
     version: number;
     namespace: string;
-    domain: string;
-    subdomainFormat: string;
-    firebaseServiceAccountKey: string;
     nodeSelector?: { [key: string]: string };
     secrets?: Record<string, string>;
     repositories: Array<Repository>;
+    app: WorkspaceAppComponent
     components: Array<WorkspaceComponent>;
-    ingresses: Array<Ingress>;
 }
 
-export function componentToWorkspaceComponent(component: Component, name: string, namespace: string, secrets: Record<string, string> = {}): WorkspaceComponent {
-    function isSecret(value: string): boolean {
-        return Object.values(secrets).includes(value);
+export function componentToWorkspaceComponent(component: App & {name: string, namespace: string, secrets?: Record<string, string>}): WorkspaceAppComponent;
+export function componentToWorkspaceComponent(component: Component & {name: string, namespace: string, secrets?: Record<string, string>}): WorkspaceComponent;
+export function componentToWorkspaceComponent(component: (Component|App) & {name: string, namespace: string, secrets?: Record<string, string>}): WorkspaceComponent | WorkspaceAppComponent {
+    let { ports, env, name, secrets, namespace, ...rest } = component;
+    if(!secrets) {
+        secrets = {};
     }
 
-    const { ports, env, ...rest } = component;
+    function isSecret(value: string): boolean {
+        return Object.values(secrets!).includes(value);
+    }
+
     return {
         ...rest,
         name,

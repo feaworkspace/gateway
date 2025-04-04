@@ -1,0 +1,6 @@
+{
+    "server": {
+        "image": "ghcr.io/feavy/workspace/workspace-server",
+        "tag": "main-14275007072"
+    }
+}
