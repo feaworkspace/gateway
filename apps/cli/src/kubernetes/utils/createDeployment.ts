@@ -6,7 +6,7 @@ interface DeploymentDefinition {
   namespace: string;
   image: string;
   replicas: number;
-  ports: NamedPort[];
+  ports?: NamedPort[];
   nodeSelector?: Record<string, string>;
   configMap?: V1ConfigMap;
   secret?: V1Secret;
@@ -42,7 +42,7 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
             {
               name: definition.name,
               image: definition.image,
-              ports: definition.ports.map(port => ({
+              ports: definition.ports && definition.ports.map(port => ({
                 containerPort: port.number,
                 name: port.name,
                 protocol: port.protocol || "TCP"

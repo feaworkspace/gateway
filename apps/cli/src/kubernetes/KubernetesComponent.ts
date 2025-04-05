@@ -9,10 +9,10 @@ export default class KubernetesComponent {
     }
 
     public getResources(): Array<K8sObject> {
-        const configMap = this.config.config && K8SUtils.createConfigMap({
+        const configMap = this.config.env && K8SUtils.createConfigMap({
             name: `${this.formattedName}-config`,
             namespace: this.config.namespace,
-            data: this.config.config
+            data: this.config.env
         });
 
         const secret = this.config.secrets && K8SUtils.createSecret({

@@ -22,7 +22,7 @@ importers:
         specifier: ^5.7.3
         version: 5.8.2
 
-  packages/cli:
+  apps/cli:
     dependencies:
       '@actions/core':
         specifier: ^1.11.1
@@ -52,7 +52,7 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0(zod@3.24.2)
 
-  packages/lib:
+  apps/lib:
     devDependencies:
       npm-run-all:
         specifier: ^4.1.5
@@ -64,7 +64,7 @@ importers:
         specifier: ^6.2.1
         version: 6.2.1(@types/node@22.13.9)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)(tsx@4.19.3)(yaml@2.7.0)
 
-  packages/server:
+  apps/server:
     dependencies:
       '@solidjs/meta':
         specifier: ^0.29.4

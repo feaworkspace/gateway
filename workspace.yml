@@ -1,25 +1,26 @@
 version: 1
 namespace: ppbo
-domain: ppbo.feavy.world
-subdomainFormat: "%s-" # %s will be replaced by the subdomain
 nodeSelector:
   kubernetes.io/hostname: "contabo"
-users: "{{ parseYaml('[test@gmail.com]')}}"
-repositories: # Repositories to clone in the workspace
-  - url: https://github.com/Feavy/ppbo.git
-    branch: main
-firebaseServiceAccountKey: "{{ readFile('serviceAccountKey.json') }}"
-# sshPrivateKey: "{{ readFile('private.key') }}"
 secrets:
   DISCORD_TOKEN: "{{ env.DISCORD_TOKEN }}" # Take DISCORD_TOKEN from env vars
   DB_PASSWORD: "{{ randomPassword() }}"
   ADMIN_PASSWORD: "{{ randomPassword() }}"
-app:
+server:
+  domain: ppbo.feavy.world
+  subdomainFormat: "%s-" # %s will be replaced by the subdomain
+  firebaseServiceAccountKey: "{{ readFile('serviceAccountKey.json') }}"
+  users: "{{ parseYaml('[test@gmail.com]')}}"
+workspace:
+  sshPrivateKey: "{{ readFile('private.key') }}" # Deploy key
+  repositories: # Repositories to clone in the workspace
+    - url: https://github.com/Feavy/ppbo.git
+      branch: main
   initScripts:
-    - include: ./scripts/install/java.yml
+    - include: ./templates/scripts/install-java.yml
       args:
         version: "17"
-    - include: ./scripts/install/bun.yml
+    - include: ./templates/scripts/install-bun.yml
   ports:
     web:
       number: 8080
@@ -33,9 +34,9 @@ app:
   env:
     DB_HOST: "{{ host('database.mongo') }}"
     DB_PASSWORD: "{{ secrets.DB_PASSWORD }}"
-dependencies:
+components:
   database:
-    include: ./templates/mongo.yml
+    include: ./templates/components/mongo.yml
     args:
       mongo_password: "{{ secrets.DB_PASSWORD }}"
       express_password: "{{ secrets.ADMIN_PASSWORD }}"

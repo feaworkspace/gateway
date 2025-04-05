@@ -1,5 +1,5 @@
 import KubernetesComponent from "./KubernetesComponent";
-import { WorkspaceAppComponent, WorkspaceConfig } from "../config/types/WorkspaceConfig";
+import { WorkspaceServerComponent, WorkspaceConfig } from "../config/types/WorkspaceConfig";
 import K8sObject from "./types/K8sObject";
 import { createNamespace, createSecret, createServiceAccount } from "./utils";
 import KubernetesAppComponent from "./KubernetesAppComponent";
@@ -49,7 +49,7 @@ export default class KubernetesWorkspace {
                 nodeSelector: this.config.nodeSelector
             }).getResources()));
         
-        resources.push(...new KubernetesAppComponent(this.config.app).getResources());
+        resources.push(...new KubernetesAppComponent(this.config.server).getResources());
         return resources;
     }
 }

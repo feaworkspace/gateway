@@ -1,11 +1,11 @@
-import { WorkspaceAppComponent, WorkspaceComponent } from "../config/types/WorkspaceConfig";
+import { WorkspaceServerComponent, WorkspaceComponent } from "../config/types/WorkspaceConfig";
 import K8sObject from "./types/K8sObject";
 import KubernetesComponent from "./KubernetesComponent";
 import { V1Service } from "@kubernetes/client-node";
 import { createIngress } from "./utils";
 
 export default class KubernetesAppComponent extends KubernetesComponent {
-    public constructor(protected config: WorkspaceAppComponent) {
+    public constructor(protected config: WorkspaceServerComponent) {
         super(config);
         if(config.tag) {
             config.image = config.image.split(":")[0] + ":" + config.tag;

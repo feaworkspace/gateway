@@ -1,10 +1,11 @@
-## Create a boilerplate of a github workflow to build and publish a docker image to ghcr.io
-name: Publish Server Image
+name: Publish Webserver Image
 
 on:
   push:
-    branches:
-      - main
+    paths:
+      - 'apps/server/**'
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -13,18 +14,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Install pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 10
-        run_install: false
-
-    - name: Install Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
-        cache: 'pnpm'
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -50,19 +39,10 @@ jobs:
     - name: Login to GitHub Container Registry
       run: echo ${{ secrets.PAT }} | docker login ghcr.io --username feavy --password-stdin
 
-    - name: Build server
-      run: |
-        cd packages/server
-        echo "Building server"
-        pnpm i --frozen-lockfile
-        pnpm run build
-        echo "Resolving symlinks"
-        find ./.output -type l -exec sh -c 'for i in "$@"; do dest=$(readlink -f "$i"); rm -rf "$i"; cp -r $dest $i; done' sh {} +
-
     - name: Build and push Docker Image
       uses: docker/build-push-action@v6
       with:
-        context: ./packages/server
-        file: ./packages/server/.docker/Dockerfile
+        context: .
+        file: ./packages/server/Dockerfile
         push: true
-        tags: ghcr.io/feavy/workspace/workspace-server:${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('{0}-{1}', github.ref_name, github.run_id) }}
+        tags: ghcr.io/feavy/workspace/webserver:${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('{0}-{1}', github.ref_name, github.run_id) }}

@@ -1,0 +1,5 @@
+{
+    "serverImage": "ghcr.io/feavy/workspace/webserver",
+    "workspaceImage": "ghcr.io/feavy/workspace/theia",
+    "tag": "main-14275007072"
+}

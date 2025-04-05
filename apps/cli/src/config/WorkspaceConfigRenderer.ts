@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 import * as yaml from 'yaml';
-import { DependencyInclude, ScriptInclude, workspaceSchema, WorkspaceFileYaml, App } from './types/WorkspaceFileSchema';
+import { ScriptInclude, workspaceSchema, WorkspaceFileYaml, ComponentInclude, Script } from './types/WorkspaceFileSchema';
 import { dependencyFileSchema } from './types/DependencyFileSchema';
 import { scriptFileSchema } from './types/ScriptFileSchema';
 import YamlRenderer from './YamlRenderer';
-import {map, toArray} from "../utils/ObjectUtils";
-import {componentToWorkspaceComponent, WorkspaceConfig} from "./types/WorkspaceConfig";
-import { Component, Ingress } from './types/ComponentSchema';
+import { toArray } from "../utils/ObjectUtils";
+import { NamedPort, WorkspaceConfig} from "./types/WorkspaceConfig";
+import { Component, Ingress, Port } from './types/ComponentSchema';
 
 export default class WorkspaceConfigRenderer {
     public ymlConfig: WorkspaceFileYaml;
@@ -23,41 +23,75 @@ export default class WorkspaceConfigRenderer {
         this.ymlConfig = this.renderYaml(this.ymlConfig);
         this.ymlConfig = workspaceSchema.parse(this.ymlConfig);
 
-        this.ymlConfig.app.initScripts = this.ymlConfig.app.initScripts.map((script) => "include" in script ? this.renderScriptInclude(script) : script);
-        this.ymlConfig.dependencies = Object.fromEntries(Object.entries(this.ymlConfig.dependencies)
+        this.ymlConfig.workspace.initScripts = this.ymlConfig.workspace.initScripts.map((script) => "include" in script ? this.renderScriptInclude(script) : script);
+        this.ymlConfig.components = Object.fromEntries(Object.entries(this.ymlConfig.components)
                                         .flatMap(([key, value]) => "include" in value ? this.renderDependencyInclude(value, key) : [[key, value]]));
 
         this.ymlConfig = this.renderYaml(this.ymlConfig);
 
-        const components: (Component & { name: string })[] = [{...this.ymlConfig.app, name: "app"}, ...toArray(this.ymlConfig.dependencies, 'name')];
+        const components: (Component & { name: string })[] = [...toArray(this.ymlConfig.components, 'name')];
 
         const config: WorkspaceConfig = {
             version: this.ymlConfig.version,
             namespace: this.ymlConfig.namespace,
-            repositories: this.ymlConfig.repositories,
             nodeSelector: this.ymlConfig.nodeSelector,
-            app: componentToWorkspaceComponent({
-                ...this.ymlConfig.app,
-                name: "app",
+            secrets: this.ymlConfig.secrets,
+            workspace: {
+                ...this.ymlConfig.workspace,
+                name: "workspace",
                 namespace: this.ymlConfig.namespace,
-                firebaseServiceAccountKey: this.ymlConfig.firebaseServiceAccountKey,
-                domain: this.ymlConfig.domain,
-                subdomainFormat: this.ymlConfig.subdomainFormat,
+                repositories: this.ymlConfig.workspace.repositories,
+                initScripts: this.ymlConfig.workspace.initScripts as Script[],
+                image: this.ymlConfig.workspace.image,
+                tag: this.ymlConfig.workspace.tag,
+                secrets: this.mapSecrets(this.ymlConfig.workspace.env),
+                env: this.mapEnv(this.ymlConfig.workspace.env),
+                ports: this.mapPorts(this.ymlConfig.workspace.ports),
+            },
+            server: {
+                ...this.ymlConfig.server,
+                namespace: this.ymlConfig.namespace,
+                name: "webserver",
+                tag: this.ymlConfig.server.tag,
+                image: this.ymlConfig.server.image,
                 ingresses: components.flatMap(component => Object.values(component.ports || {})).map(port => port.ingress).filter(Boolean) as Ingress[],
-            }),
-            components: components.map((component) => componentToWorkspaceComponent({
+            },
+            components: components.map((component) => ({
                 ...component,
                 name: component.name,
                 namespace: this.ymlConfig.namespace,
-                secrets: this.ymlConfig.secrets
+                secrets: this.mapSecrets(this.ymlConfig.secrets),
+                env: this.mapEnv(component.env),
+                ports: this.mapPorts(component.ports),
             })),
-            secrets: this.ymlConfig.secrets,
         }
 
         return config;
     }
 
-    public renderDependencyInclude(include: DependencyInclude, key: string) {
+    private mapSecrets(env: Record<string, string> = {}) {
+        const secrets = this.ymlConfig.secrets || {};
+        function isSecret(value: string): boolean {
+            return Object.values(secrets).includes(value);
+        }
+
+        return Object.entries(env).filter(([_, value]) => isSecret(value)).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+    }
+
+    private mapEnv(env: Record<string, string> = {}) {
+        const secrets = this.ymlConfig.secrets || {};
+        function isSecret(value: string): boolean {
+            return Object.values(secrets).includes(value);
+        }
+
+        return Object.entries(env).filter(([_, value]) => !isSecret(value)).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+    }
+
+    private mapPorts(ports: Record<string, Port> = {}): NamedPort[] {
+        return Object.entries(ports || {}).map(([name, port]) => ({ ...port, name }));
+    }
+
+    public renderDependencyInclude(include: ComponentInclude, key: string) {
         const {components} = YamlRenderer.fromFile(include.include, dependencyFileSchema)
             .with({
                 args: include.args,

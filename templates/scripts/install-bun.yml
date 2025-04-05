@@ -9,3 +9,4 @@ script: |
     args = "-s \"bun-v{{ args.version }}\""
   fi
   curl -fsSL https://bun.sh/install | bash $args
+  source ~/.bashrc
