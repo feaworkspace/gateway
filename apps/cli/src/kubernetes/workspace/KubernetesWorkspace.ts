@@ -62,6 +62,7 @@ export default class KubernetesWorkspace {
             name: name,
             namespace: this.config.namespace,
             containers: containers,
+            nodeSelector: this.config.nodeSelector,
             // labels: {
             //     app: this.config.name
             // },

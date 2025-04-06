@@ -15,11 +15,12 @@
   image: mongo-express
   tag: latest
   ports:
-    - name: web
-      number: 8081
+    - name: mongo-express
+      number: 10081
       ingress:
         subdomain: mongo
   env:
+    PORT: "10081"
     ME_CONFIG_MONGODB_URL: "mongodb://localhost:{{ mongo.ports.mongo.number }}"
     ME_CONFIG_MONGODB_SERVER: "localhost"
     ME_CONFIG_MONGODB_PORT: "{{ mongo.ports.mongo.number }}"

@@ -25,7 +25,7 @@ workspace:
       ingress:
         auth: false
     - name: api
-      number: 8080
+      number: 8081
       ingress:
         subdomain: api
         auth: false
