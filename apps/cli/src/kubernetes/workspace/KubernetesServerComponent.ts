@@ -30,7 +30,7 @@ export default class KubernetesServerComponent extends KubernetesComponent {
     public getResources(): Array<K8sObject> {
         const resources = super.getResources();
 
-        const ingresses = this.componentsConfig.flatMap(it => it.ports).map(port => port.ingress).filter(ingress => ingress !== undefined);
+        const ingresses = [this.config, ...this.componentsConfig].flatMap(it => it.ports).map(port => port.ingress).filter(ingress => ingress !== undefined);
 
         const ports: PortDefinition[] = [...this.config.ports, ...this.componentsConfig.flatMap(it => it.ports)].map(port => ({
             name: port.name,
@@ -56,6 +56,7 @@ export default class KubernetesServerComponent extends KubernetesComponent {
                 service: service // ?
             }))
         });
+
         return [...resources, service, ingress];
     }
 

@@ -51,7 +51,7 @@ export default class KubernetesWorkspace {
         const kubernetesComponents = [
             ...this.config.components.map(componentConfig => new KubernetesComponent(this.config, componentConfig as WorkspaceComponentConfig)),
             new KubernetesWorkspaceComponent(this.config, this.config.workspace),
-            new KubernetesServerComponent(this.config, this.config.server, this.config.components as WorkspaceComponentConfig[], name)
+            new KubernetesServerComponent(this.config, this.config.server, [this.config.workspace, ...this.config.components] as WorkspaceComponentConfig[], name)
         ];
 
         resources.push(...kubernetesComponents.flatMap(component => component.getResources()));

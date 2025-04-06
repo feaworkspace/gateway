@@ -27,7 +27,7 @@ workspace:
     - name: api
       number: 8081
       ingress:
-        subdomain: api
+        path: /api
         auth: false
   # secrets:
   #   ...

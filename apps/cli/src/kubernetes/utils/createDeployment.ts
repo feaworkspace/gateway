@@ -48,6 +48,13 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
           app: definition.name
         }
       },
+      strategy: {
+        type: "RollingUpdate",
+        rollingUpdate: {
+          maxUnavailable: 1,
+          maxSurge: 0
+        }
+      },
       template: {
         metadata: {
           labels: {
