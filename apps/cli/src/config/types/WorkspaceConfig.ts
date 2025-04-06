@@ -92,8 +92,8 @@ export interface WorkspaceServerConfig {
 
 export const workspaceServerSchema = z.object({
   name: z.string().default('workspace-webserver'),
-  image: z.string().default(Settings.serverImage),
-  tag: z.string().default(Settings.tag),
+  image: z.string().default(Settings.server.image),
+  tag: z.string().default(Settings.server.tag),
   users: z.array(z.string()),
   domain: z.string(),
   firebaseServiceAccountKey: z.string(),
@@ -126,8 +126,8 @@ export interface WorkspaceWorkspaceConfig {
 
 export const workspaceWorkspaceSchema = z.object({
   name: z.string().default('workspace-workspace'),
-  image: z.string().default(Settings.workspaceImage),
-  tag: z.string().default(Settings.tag),
+  image: z.string().default(Settings.workspace.image),
+  tag: z.string().default(Settings.workspace.tag),
   gitPrivateKey: z.string().optional(),
   repositories: z.array(workspaceRepositorySchema).default([]),
   init: z.array(z.union([workspaceScriptSchema, workspaceIncludeSchema])).default([]),

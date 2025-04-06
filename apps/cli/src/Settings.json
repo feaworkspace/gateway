@@ -1,5 +1,10 @@
 {
-    "serverImage": "ghcr.io/feavy/workspace/server",
-    "workspaceImage": "ghcr.io/feavy/workspace/theia",
-    "tag": "main-adb7991"
+    "server": {
+        "image": "ghcr.io/feavy/workspace/server",
+        "tag": "main-c1b5aea"
+    },
+    "workspace": {
+        "image": "ghcr.io/feavy/workspace/theia",
+        "tag": "main-c1b5aea"
+    }
 }
