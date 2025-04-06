@@ -43,6 +43,7 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
     },
     spec: {
       replicas: definition.replicas,
+      revisionHistoryLimit: 1,
       selector: {
         matchLabels: {
           app: definition.name
