@@ -30,7 +30,7 @@ COPY --from=build /app/apps/server/.output /app/dist
 COPY --from=build /app/apps/server/entrypoint.sh /app/entrypoint.sh
 
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/serviceAccountKey.json
-ENV NITRO_PORT=8080
-EXPOSE 8080
+ENV NITRO_PORT=3001
+EXPOSE 3001
 
 ENTRYPOINT [ "/app/entrypoint.sh" ]
