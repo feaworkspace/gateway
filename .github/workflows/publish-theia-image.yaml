@@ -42,7 +42,7 @@ jobs:
     - name: Build and push Docker Image
       uses: docker/build-push-action@v6
       with:
-        context: ./packages/theia
-        file: ./packages/theia/Dockerfile
+        context: ./apps/theia
+        file: ./apps/theia/Dockerfile
         push: true
         tags: ghcr.io/feavy/workspace/theia:${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('{0}-{1}', github.ref_name, github.run_id) }}

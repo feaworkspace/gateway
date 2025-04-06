@@ -1,4 +1,4 @@
-name: Publish Webserver Image
+name: Publish Server Image
 
 on:
   push:
@@ -43,6 +43,6 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         context: .
-        file: ./packages/server/Dockerfile
+        file: ./apps/server/Dockerfile
         push: true
-        tags: ghcr.io/feavy/workspace/webserver:${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('{0}-{1}', github.ref_name, github.run_id) }}
+        tags: ghcr.io/feavy/workspace/server:${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('{0}-{1}', github.ref_name, github.run_id) }}
