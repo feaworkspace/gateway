@@ -32,7 +32,7 @@ export default class KubernetesServerComponent extends KubernetesComponent {
 
         const ingresses = [this.config, ...this.componentsConfig].flatMap(it => it.ports).map(port => port.ingress).filter(ingress => ingress !== undefined);
 
-        const ports: PortDefinition[] = [...this.config.ports, ...this.componentsConfig.flatMap(it => it.ports)].map(port => ({
+        const allPorts: PortDefinition[] = [...this.config.ports, ...this.componentsConfig.flatMap(it => it.ports)].map(port => ({
             name: port.name,
             protocol: port.protocol,
             number: port.number,
@@ -42,7 +42,12 @@ export default class KubernetesServerComponent extends KubernetesComponent {
         const service = createService({
             name: `${this.formattedName}-service-clusterip`,
             namespace: this.mainConfig.namespace,
-            ports: ports,
+            ports: this.config.ports.map(port => ({
+                name: port.name,
+                protocol: port.protocol,
+                number: port.number,
+                exposed: true
+            })),
             deploymentName: this.deploymentName
         });
 
