@@ -16,11 +16,11 @@
   tag: latest
   ports:
     - name: mongo-express
-      number: 10081
+      number: 34310
       ingress:
         subdomain: mongo
   env:
-    PORT: "10081"
+    PORT: "34310"
     ME_CONFIG_MONGODB_URL: "mongodb://127.0.0.1:{{ mongo.ports.mongo.number }}"
     ME_CONFIG_MONGODB_SERVER: "127.0.0.1"
     ME_CONFIG_MONGODB_PORT: "{{ mongo.ports.mongo.number }}"
