@@ -1,19 +1,39 @@
 import {V1ConfigMap, V1Deployment, V1EnvFromSource, V1PersistentVolumeClaim, V1Secret} from "@kubernetes/client-node";
-import {NamedPort} from "../../config/types/WorkspaceConfig";
 
-interface DeploymentDefinition {
+export interface ContainerDefinition {
   name: string;
-  namespace: string;
   image: string;
-  replicas: number;
-  ports?: NamedPort[];
-  nodeSelector?: Record<string, string>;
   configMap?: V1ConfigMap;
   secret?: V1Secret;
-  persistentVolumeClaims?: V1PersistentVolumeClaim[];
+  ports?: PortDefinition[];
+  volumes?: Array<V1PersistentVolumeClaim>;
+  // volumes?: Array<{
+  //   name: string,
+  //   accessModes: string[],
+  //   storageClassName: string,
+  //   size: string
+  //   mountPath: string;
+  // }>;
+}
+
+export interface PortDefinition {
+  name: string;
+  number: number;
+  protocol: string;
+  exposed: boolean;
+}
+
+export interface DeploymentDefinition {
+  name: string;
+  namespace: string;
+  replicas: number;
+  nodeSelector?: Record<string, string>;
+  containers: Array<ContainerDefinition>;
 }
 
 export default function createDeployment(definition: DeploymentDefinition): V1Deployment {
+  const volumes = definition.containers.flatMap(container => container.volumes || []);
+
   return {
     apiVersion: "apps/v1",
     kind: "Deployment",
@@ -38,26 +58,26 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
           ...definition.nodeSelector && {
             nodeSelector: definition.nodeSelector
           },
-          containers: [
-            {
-              name: definition.name,
-              image: definition.image,
-              ports: definition.ports && definition.ports.map(port => ({
+          containers: definition.containers.map(container => ({
+              name: container.name,
+              image: container.image,
+              ports: container.ports && container.ports.map(port => ({
                 containerPort: port.number,
                 name: port.name,
-                protocol: port.protocol || "TCP"
+                protocol: port.protocol
               })),
-              envFrom: envFrom(definition.configMap, definition.secret)
+              envFrom: envFrom(container.configMap, container.secret),
+              volumeMounts: container.volumes && container.volumes.map(volume => ({
+                name: volume.metadata?.name!,
+                mountPath: volume.metadata?.annotations?.mountPath!
+              }))
+          })),
+          volumes: volumes.map(volume => ({
+            name: volume.metadata?.name!,
+            persistentVolumeClaim: {
+              claimName: volume.metadata?.name!
             }
-          ],
-          ...definition.persistentVolumeClaims && {
-            volumes: definition.persistentVolumeClaims.map(pvc => ({
-              name: pvc.metadata?.name!,
-              persistentVolumeClaim: {
-                claimName: pvc.metadata?.name!
-              }
-            }))
-          }
+          }))
         }
       }
     }

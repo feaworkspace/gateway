@@ -1,45 +1,157 @@
-import { Server, Repository, Script } from "./WorkspaceFileSchema";
-import { Component, Ingress, Port, Volume } from "./ComponentSchema";
+import * as z from 'zod';
+import Settings from '../../Settings.json';
 
-export interface NamedPort extends Port {
-    name: string;
+export interface WorkspaceIngressConfig {
+  subdomain: string;
+  path: string;
+  auth: boolean;
 }
 
-export interface WorkspaceComponent {
-    name: string;
-    image: string;
-    namespace: string;
-    nodeSelector?: { [key: string]: string };
-    ports?: Array<NamedPort>;
-    env?: Record<string, string>;
-    volumes?: Record<string, Volume>;
-    secrets?: Record<string, string>;
+export const workspaceIngressSchema = z.object({
+  subdomain: z.string().default(''),
+  path: z.string().default('/'),
+  auth: z.boolean().default(true),
+});
+
+export interface WorkspacePortConfig {
+  name: string;
+  number: number;
+  protocol: string;
+  ingress?: WorkspaceIngressConfig | null;
 }
 
-export interface WorkspaceServerComponent extends WorkspaceComponent {
-    name: "webserver";
-    image: string;
-    tag: string;
-    domain: string;
-    firebaseServiceAccountKey: string;
-    subdomainFormat: string;
-    ingresses: Array<Ingress>;
+export const workspacePortSchema = z.object({
+  name: z.string(),
+  number: z.number(),
+  protocol: z.string().default('TCP'),
+  ingress: workspaceIngressSchema.optional().nullable(),
+});
+
+export interface WorkspaceVolumeConfig {
+  name: string;
+  size: string;
+  mountPath: string;
 }
 
-export interface WorkspaceWorkspaceComponent extends WorkspaceComponent {
-    name: "workspace";
-    image: string;
-    tag?: string;
-    initScripts: Array<Script>;
-    repositories: Array<Repository>;
+export const workspaceVolumeSchema = z.object({
+  name: z.string(),
+  size: z.string().default('1Gi'),
+  mountPath: z.string(),
+});
+
+export interface WorkspaceComponentConfig {
+  name: string;
+  image: string;
+  tag: string;
+  ports: Array<WorkspacePortConfig>;
+  env: Record<string, string>;
+  secrets: Record<string, string>;
+  volumes: Array<WorkspaceVolumeConfig>;
 }
+
+export const workspaceComponentSchema = z.object({
+  name: z.string(),
+  image: z.string(),
+  tag: z.string().default('latest'),
+  ports: z.array(workspacePortSchema).default([]),
+  env: z.record(z.string()).default({}),
+  secrets: z.record(z.string()).default({}),
+  volumes: z.array(workspaceVolumeSchema).default([]),
+});
+
+export type WorkspaceIncludeConfig = {
+  include: string;
+  with?: any;
+};
+
+export const workspaceIncludeSchema = z.object({
+  include: z.string(),
+  with: z.any().default({})
+});
+
+export interface RepositoryConfig {
+  remote: string;
+  name?: string;
+  branch?: string;
+}
+
+export const workspaceRepositorySchema = z.object({
+  remote: z.string(),
+  name: z.string().optional(),
+  branch: z.string().optional(),
+});
+
+export interface WorkspaceServerConfig {
+  name: string;
+  image: string;
+  tag: string;
+  users: string[];
+  domain: string;
+  firebaseServiceAccountKey: string;
+}
+
+export const workspaceServerSchema = z.object({
+  name: z.string().default('workspace-webserver'),
+  image: z.string().default(Settings.serverImage),
+  tag: z.string().default(Settings.tag),
+  users: z.array(z.string()),
+  domain: z.string(),
+  firebaseServiceAccountKey: z.string(),
+});
+
+export interface WorkspaceScriptConfig {
+  title: string;
+  args: Record<string, string>;
+  script: string;
+}
+
+export const workspaceScriptSchema = z.object({
+  title: z.string(),
+  args: z.record(z.string()).default({}),
+  script: z.string(),
+});
+
+export interface WorkspaceWorkspaceConfig {
+  name: string;
+  image: string;
+  tag: string;
+  gitPrivateKey?: string;
+  repositories: Array<RepositoryConfig>;
+  init: Array<WorkspaceScriptConfig | WorkspaceIncludeConfig>;
+  ports: Array<WorkspacePortConfig>;
+  env: Record<string, string>;
+  secrets: Record<string, string>;
+  volumes: Array<WorkspaceVolumeConfig>;
+}
+
+export const workspaceWorkspaceSchema = z.object({
+  name: z.string().default('workspace-workspace'),
+  image: z.string().default(Settings.workspaceImage),
+  tag: z.string().default(Settings.tag),
+  gitPrivateKey: z.string().optional(),
+  repositories: z.array(workspaceRepositorySchema).default([]),
+  init: z.array(z.union([workspaceScriptSchema, workspaceIncludeSchema])).default([]),
+  ports: z.array(workspacePortSchema).default([]),
+  env: z.record(z.string()).default({}),
+  secrets: z.record(z.string()).default({}),
+  volumes: z.array(workspaceVolumeSchema).default([]),
+});
+
 
 export interface WorkspaceConfig {
-    version: number;
-    namespace: string;
-    nodeSelector?: { [key: string]: string };
-    secrets?: Record<string, string>;
-    server: WorkspaceServerComponent
-    workspace: WorkspaceWorkspaceComponent;
-    components: Array<WorkspaceComponent>;
+  name: string;
+  namespace: string;
+  nodeSelector: Record<string, string>;
+  server: WorkspaceServerConfig;
+  workspace: WorkspaceWorkspaceConfig;
+  components: Array<WorkspaceComponentConfig | WorkspaceIncludeConfig>;
 }
+
+export const workspaceSchema = z.object({
+  name: z.string(),
+  namespace: z.string(),
+  nodeSelector: z.record(z.string()).default({}),
+  server: workspaceServerSchema,
+  workspace: workspaceWorkspaceSchema,
+  components: z.array(z.union([workspaceComponentSchema, workspaceIncludeSchema])).default([]),
+});

@@ -100,8 +100,8 @@ export default class YamlRenderer {
             }
         }
         if(variable.match(/^[a-zA-Z]+\([^)]*\)$/)) {
-            const fn = new Function('functions', `const res = functions.${variable}; return typeof res === "function" ? res("${path}") : res;`);
-            return fn(this.functions);
+            const fn = new Function('functions', 'env', `const res = functions.${variable}; return typeof res === "function" ? res("${path}") : res;`);
+            return fn(this.functions, this.yaml.env);
         }
 
         const value = this.get(variable);

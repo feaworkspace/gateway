@@ -20,3 +20,11 @@ export function valuesToString(data: Record<string, any>): Record<string, string
     acc[key] = value.toString();
     return acc;
   }, {});}
+
+/**
+ * Returns the formatted name of the component.
+ * Converts camelCase to kebab-case.
+ */
+export function formatName(name: string): string {
+  return name.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/\./g, "-").replace(/^-/, "");
+}

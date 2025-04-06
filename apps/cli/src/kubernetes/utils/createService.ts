@@ -1,17 +1,14 @@
-import {V1Deployment, V1Service} from "@kubernetes/client-node";
+import { V1Service } from "@kubernetes/client-node";
+import { PortDefinition } from "./createDeployment";
 
 interface ServiceDefinition {
   name: string;
   namespace: string;
-  deployment: V1Deployment;
+  ports: Array<PortDefinition>;
+  deploymentName: string;
 }
 
 export default function createService(definition: ServiceDefinition): V1Service {
-  const ports = definition.deployment.spec?.template.spec?.containers[0].ports;
-  if (!ports) {
-    throw new Error("No ports found in deployment");
-  }
-
   return {
     apiVersion: "v1",
     kind: "Service",
@@ -21,11 +18,11 @@ export default function createService(definition: ServiceDefinition): V1Service 
     },
     spec: {
       selector: {
-        app: definition.name
+        app: definition.deploymentName
       },
-      ports: ports.map(port => ({
-        port: port.containerPort,
-        targetPort: port.containerPort,
+      ports: definition.ports.map(port => ({
+        port: port.number,
+        targetPort: port.number,
         protocol: port.protocol || "TCP",
         name: port.name
       }))

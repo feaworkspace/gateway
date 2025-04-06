@@ -1,49 +1,44 @@
-version: 1
-namespace: ppbo
+# version: 1
+name: "ppbo"
+namespace: "ppbo"
 nodeSelector:
-  kubernetes.io/hostname: "contabo"
-secrets:
-  DISCORD_TOKEN: "{{ env.DISCORD_TOKEN }}" # Take DISCORD_TOKEN from env vars
-  DB_PASSWORD: "{{ randomPassword() }}"
-  ADMIN_PASSWORD: "{{ randomPassword() }}"
+  kubernetes.io/arch: "amd64"
 server:
-  domain: ppbo.feavy.world
-  subdomainFormat: "%s-" # %s will be replaced by the subdomain
+  domain: "%s-ppbo.feavy.world"
+  users: "{{ parseYaml(env.ALLOWED_USERS) }}"
   firebaseServiceAccountKey: "{{ readFile('serviceAccountKey.json') }}"
-  users: "{{ parseYaml('[test@gmail.com]')}}"
 workspace:
-  sshPrivateKey: "{{ readFile('private.key') }}" # Deploy key
-  repositories: # Repositories to clone in the workspace
-    - url: https://github.com/Feavy/ppbo.git
+  repositories:
+    - remote: https://github.com/feavy/ppbo.git
       branch: main
-  initScripts:
-    - include: ./templates/scripts/install-java.yml
-      args:
-        version: "17"
-    - include: ./templates/scripts/install-bun.yml
+  gitPrivateKey: "test"
+  init:
+    - include: "./templates/scripts/install-java.yml"
+    # - include: "@install-java.yml"
+      with:
+        args.version: "17"
+    # - include: "@install-bun.yml"
+    - include: "./templates/scripts/install-bun.yml"
   ports:
-    web:
+    - name: web
       number: 8080
       ingress:
         auth: false
-    api:
-      number: 8181
+    - name: api
+      number: 8080
       ingress:
-        path: /api
+        subdomain: api
         auth: false
-  env:
-    DB_HOST: "{{ host('database.mongo') }}"
-    DB_PASSWORD: "{{ secrets.DB_PASSWORD }}"
+  # secrets:
+  #   ...
+  # env:
+  #     ...
 components:
-  database:
-    include: ./templates/components/mongo.yml
-    args:
-      mongo_password: "{{ secrets.DB_PASSWORD }}"
-      express_password: "{{ secrets.ADMIN_PASSWORD }}"
-    components:
-      mongo:
-        volumes.mongoData.size: 10Gi
-  # discord-bot:
+  - include: "./templates/components/mongo.yml"
+  # - include: "@mongo.yml"
+    with:
+      mongo.volumes.mongoData.size: 10Gi
+  # - name: "discord-bot"
   #   image: x
-  #   env:
-  #     DISCORD_TOKEN: "{{ secrets.DISCORD_TOKEN }}"
+  #   secrets: 
+  #     DISCORD_TOKEN: "{{ env.DISCORD_TOKEN }}"

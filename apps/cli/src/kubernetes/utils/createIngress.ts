@@ -1,14 +1,16 @@
 import { V1Ingress, V1IngressRule, V1Service} from "@kubernetes/client-node";
 
+export interface IngressRuleDefinition {
+  host: string;
+  path: string;
+  port: number;
+  service: V1Service;
+}
+
 interface IngressDefinition {
   name: string;
   namespace: string;
-  rules: Array<{
-    host: string,
-    path: string,
-    service: V1Service,
-    port: number
-  }>
+  rules: Array<IngressRuleDefinition>
 }
 
 // apiVersion: networking.k8s.io/v1

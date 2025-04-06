@@ -1,7 +1,7 @@
 import * as k8s from '@kubernetes/client-node';
 import { KubernetesObject } from "@kubernetes/client-node/dist/types";
 import { V1Secret } from "@kubernetes/client-node";
-import KubernetesWorkspace from './KubernetesWorkspace';
+import KubernetesWorkspace from './workspace/KubernetesWorkspace';
 import * as yaml from "yaml";
 
 

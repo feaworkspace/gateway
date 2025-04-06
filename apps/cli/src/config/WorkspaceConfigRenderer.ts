@@ -1,15 +1,12 @@
 import * as fs from 'fs';
 import * as yaml from 'yaml';
-import { ScriptInclude, workspaceSchema, WorkspaceFileYaml, ComponentInclude, Script } from './types/WorkspaceFileSchema';
-import { dependencyFileSchema } from './types/DependencyFileSchema';
-import { scriptFileSchema } from './types/ScriptFileSchema';
 import YamlRenderer from './YamlRenderer';
-import { toArray } from "../utils/ObjectUtils";
-import { NamedPort, WorkspaceConfig} from "./types/WorkspaceConfig";
-import { Component, Ingress, Port } from './types/ComponentSchema';
+import { overrideObject, toArray } from "../utils/ObjectUtils";
+import { workspaceComponentSchema, WorkspaceConfig, WorkspaceIncludeConfig, workspaceSchema, workspaceScriptSchema } from './types/WorkspaceConfig';
+import { z, ZodSchema } from 'zod';
 
 export default class WorkspaceConfigRenderer {
-    public ymlConfig: WorkspaceFileYaml;
+    public ymlConfig: WorkspaceConfig;
     private existingSecrets: Record<string, string> = {};
 
     public constructor(workspaceFile: string) {
@@ -17,107 +14,78 @@ export default class WorkspaceConfigRenderer {
         this.ymlConfig = yaml.parse(workspaceYml);
     }
 
-    public render(existingSecrets: Record<string, string>) {
+    public async render(existingSecrets: Record<string, string>) {
         this.existingSecrets = existingSecrets;
 
         this.ymlConfig = this.renderYaml(this.ymlConfig);
         this.ymlConfig = workspaceSchema.parse(this.ymlConfig);
 
-        this.ymlConfig.workspace.initScripts = this.ymlConfig.workspace.initScripts.map((script) => "include" in script ? this.renderScriptInclude(script) : script);
-        this.ymlConfig.components = Object.fromEntries(Object.entries(this.ymlConfig.components)
-                                        .flatMap(([key, value]) => "include" in value ? this.renderDependencyInclude(value, key) : [[key, value]]));
+        await this.renderIncludes(this.ymlConfig.workspace.init, workspaceScriptSchema, "https://raw.githubusercontent.com/Feavy/workspace/refs/heads/main/templates/components/");
+        await this.renderIncludes(this.ymlConfig.components, workspaceComponentSchema, "https://raw.githubusercontent.com/Feavy/workspace/refs/heads/main/templates/scripts/");
+
+        console.log(yaml.stringify(this.ymlConfig, { indent: 2 })); // Debugging line
 
         this.ymlConfig = this.renderYaml(this.ymlConfig);
 
-        const components: (Component & { name: string })[] = [...toArray(this.ymlConfig.components, 'name')];
+        return this.ymlConfig;
+    }
 
-        const config: WorkspaceConfig = {
-            version: this.ymlConfig.version,
-            namespace: this.ymlConfig.namespace,
-            nodeSelector: this.ymlConfig.nodeSelector,
-            secrets: this.ymlConfig.secrets,
-            workspace: {
-                ...this.ymlConfig.workspace,
-                name: "workspace",
-                namespace: this.ymlConfig.namespace,
-                repositories: this.ymlConfig.workspace.repositories,
-                initScripts: this.ymlConfig.workspace.initScripts as Script[],
-                image: this.ymlConfig.workspace.image,
-                tag: this.ymlConfig.workspace.tag,
-                secrets: this.mapSecrets(this.ymlConfig.workspace.env),
-                env: this.mapEnv(this.ymlConfig.workspace.env),
-                ports: this.mapPorts(this.ymlConfig.workspace.ports),
-            },
-            server: {
-                ...this.ymlConfig.server,
-                namespace: this.ymlConfig.namespace,
-                name: "webserver",
-                tag: this.ymlConfig.server.tag,
-                image: this.ymlConfig.server.image,
-                ingresses: components.flatMap(component => Object.values(component.ports || {})).map(port => port.ingress).filter(Boolean) as Ingress[],
-            },
-            components: components.map((component) => ({
-                ...component,
-                name: component.name,
-                namespace: this.ymlConfig.namespace,
-                secrets: this.mapSecrets(this.ymlConfig.secrets),
-                env: this.mapEnv(component.env),
-                ports: this.mapPorts(component.ports),
-            })),
+    public async renderIncludes(object: any, schema: ZodSchema, root?: string): Promise<any> {
+        if (Array.isArray(object)) {
+            return Promise.all(object.map(async (item) => {
+                const replacement = await this.mapInclude(item, schema, true, root);
+                const index = object.indexOf(item);
+                object.splice(index, 1, ...replacement);
+            }));
+        } else if (typeof object === 'object' && typeof object.include === 'string') {
+            Object.assign(object, await this.mapInclude(object, schema, false, root));
+        }
+    }
+
+    public async mapInclude(object: WorkspaceIncludeConfig & { with: any }, schema: ZodSchema, array: true, root?: string): Promise<object[]>;
+    public async mapInclude(object: WorkspaceIncludeConfig & { with: any }, schema: ZodSchema, array: false, root?: string): Promise<object>;
+    public async mapInclude(object: WorkspaceIncludeConfig & { with: any }, schema: ZodSchema, array: boolean, root?: string): Promise<any> {
+        if(array) {
+            schema = z.union([schema, z.array(schema)]);
         }
 
-        return config;
-    }
-
-    private mapSecrets(env: Record<string, string> = {}) {
-        const secrets = this.ymlConfig.secrets || {};
-        function isSecret(value: string): boolean {
-            return Object.values(secrets).includes(value);
+        let { include, with: override } = object;
+        if(include.startsWith("@") && root) {
+            include = root + include.substring(1);
+        }
+        const content = include.startsWith("http") ? await fetch(include).then(res => res.text()) : await fs.promises.readFile(include, 'utf8');
+        let yml = schema.parse(yaml.parse(content));
+        if(Array.isArray(yml)) {
+            yml.forEach(object => {
+                delete (object as any).include;
+                delete (object as any).with;
+            });
+        } else {
+            delete (object as any).include;
+            delete (object as any).with;
         }
 
-        return Object.entries(env).filter(([_, value]) => isSecret(value)).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
-    }
+        yml = overrideObject(yml, override);
 
-    private mapEnv(env: Record<string, string> = {}) {
-        const secrets = this.ymlConfig.secrets || {};
-        function isSecret(value: string): boolean {
-            return Object.values(secrets).includes(value);
+        
+        yml = new YamlRenderer(yml)
+            .renderOrFail();
+
+        if(!Array.isArray(yml) && array) {
+            yml = [yml];
         }
 
-        return Object.entries(env).filter(([_, value]) => !isSecret(value)).reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
-    }
-
-    private mapPorts(ports: Record<string, Port> = {}): NamedPort[] {
-        return Object.entries(ports || {}).map(([name, port]) => ({ ...port, name }));
-    }
-
-    public renderDependencyInclude(include: ComponentInclude, key: string) {
-        const {components} = YamlRenderer.fromFile(include.include, dependencyFileSchema)
-            .with({
-                args: include.args,
-                components: include.components
-            })
-            .withFunction("host", (host: string) => `{{ host('${key}.${host}') }}`)
-            .render();
-        return Object.entries(components).map(([name, component]) => [key + "." + name, component]);
-    }
-
-    public renderScriptInclude(include: ScriptInclude) {
-        const {title, script} = YamlRenderer.fromFile(include.include, scriptFileSchema)
-            .with({ args: include.args })
-            .render();
-        return {title, script};
+        return yml;
     }
 
     private renderYaml(yaml: any) {
         return YamlRenderer.fromObject(yaml)
           .with({ env: process.env })
-          .withFunction("randomPassword", this.randomPassword)
-          .withFunction("host", this.host.bind(this))
-          .preRenderOrFail("secrets")
+        //   .withFunction("randomPassword", this.randomPassword)
+        //   .withFunction("host", this.host.bind(this))
+        //   .preRenderOrFail("secrets")
           .renderOrFail();
     }
-
 
     public randomPassword = (length: number = 32) => (path: string) => {
         const key = path.replace("secrets.", "");

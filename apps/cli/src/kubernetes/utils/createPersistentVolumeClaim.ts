@@ -16,6 +16,9 @@ export default function createPersistentVolumeClaim(definition: PersistentVolume
     metadata: {
       name: definition.name,
       namespace: definition.namespace,
+      annotations: {
+        'mountPath': definition.mountPath,
+      }
     },
     spec: {
       storageClassName: definition.storageClassName,

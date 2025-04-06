@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import WorkspaceConfigRenderer from './config/WorkspaceConfigRenderer';
 import { fromError } from 'zod-validation-error';
-import KubernetesWorkspace from './kubernetes/KubernetesWorkspace';
+import KubernetesWorkspace from './kubernetes/workspace/KubernetesWorkspace';
 import * as yaml from 'yaml';
 import * as dotenv from 'dotenv';
 import { lib } from "lib";
@@ -32,7 +32,7 @@ console.log(lib());
             if(secret) existingSecret = dataValuesFromBase64(secret.data || {});
         }
 
-        const workspaceConfig = configRenderer.render(existingSecret);
+        const workspaceConfig = await configRenderer.render(existingSecret);
 
         // console.log(yaml.stringify(workspaceConfig));
 
