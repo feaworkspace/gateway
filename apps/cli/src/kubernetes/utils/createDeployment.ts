@@ -60,6 +60,9 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
         metadata: {
           labels: {
             app: definition.name
+          },
+          annotations: {
+            'kubectl.kubernetes.io/restartedAt': new Date().toISOString(),
           }
         },
         spec: {

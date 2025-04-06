@@ -23,7 +23,11 @@ export default class KubernetesClient {
       try {
         const existing = await this.getObject(resource.apiVersion!, resource.kind!, resource.metadata?.name!);
         if (existing) {
-          await this.k8sObjectApi.patch(resource);
+          try {
+            await this.k8sObjectApi.replace(resource);
+          } catch (e) {
+            await this.k8sObjectApi.patch(resource);
+          }
           console.log(`${resource.kind} ${resource.metadata?.name} updated`);
         } else {
           await this.k8sObjectApi.create(resource);
