@@ -9,7 +9,7 @@ export default class KubernetesComponent {
     }
 
     public name(...suffixes: string[]) {
-        return formatName([this.mainConfig.name, this.config.name, ...suffixes].join("-"));
+        return formatName([this.mainConfig.name, "workspace", this.config.name, ...suffixes].join("-"));
     }
 
     public get ports() {
