@@ -7,6 +7,8 @@ import { merge } from "../../utils/ObjectUtils";
 import { PortDefinition } from "../utils/createDeployment";
 
 export default class KubernetesServerComponent extends KubernetesComponent {
+    private static readonly PORT = 28543;
+
     public constructor(mainConfig: WorkspaceConfig, private serverConfig: WorkspaceServerConfig, private componentsConfig: Array<WorkspaceComponentConfig>) {
         super(mainConfig, merge(serverConfig, {
             name: "server",
@@ -22,7 +24,7 @@ export default class KubernetesServerComponent extends KubernetesComponent {
                 {
                     name: "nitro",
                     protocol: "TCP",
-                    number: 3001,
+                    number: KubernetesServerComponent.PORT,
                     ingress: {}
                 }
             ],
@@ -59,7 +61,7 @@ export default class KubernetesServerComponent extends KubernetesComponent {
             namespace: this.mainConfig.namespace,
             rules: uniqueBy(ingresses, it => this.getHost(it.subdomain)).map(ingress => ({
                 host: this.getHost(ingress.subdomain),
-                port: 3001,
+                port: KubernetesServerComponent.PORT,
                 path: "/",
                 service: service // ?
             }))
