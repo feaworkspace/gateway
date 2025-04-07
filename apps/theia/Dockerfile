@@ -77,5 +77,7 @@ COPY --chown=theia:theia default.gitconfig .gitconfig
 # Launch the backend application via node
 ENTRYPOINT [ "node", "/home/theia/applications/browser/lib/backend/main.js" ]
 
+EXPOSE 28544
+
 # Arguments passed to the application
-CMD [ "/workspace", "--hostname=0.0.0.0" ]
+CMD [ "/workspace", "--hostname=0.0.0.0", "--port=28544" ]
