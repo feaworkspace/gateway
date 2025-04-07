@@ -15,7 +15,8 @@ export default class KubernetesServerComponent extends KubernetesComponent {
                 "FIREBASE_SERVICE_ACCOUNT_KEY": serverConfig.firebaseServiceAccountKey
             },
             env: {
-                "INGRESSES": JSON.stringify(componentsConfig.map(it => it.ports).flatMap(it => it.map(port => port.ingress)).filter(it => it !== undefined))
+                "PORTS": JSON.stringify(componentsConfig.flatMap(it => it.ports).filter(it => it !== undefined)),
+                "ALLOWED_USERS": JSON.stringify(serverConfig.users)
             },
             ports: [
                 {
