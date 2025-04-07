@@ -3,6 +3,8 @@ name: "ppbo"
 namespace: "ppbo"
 nodeSelector:
   kubernetes.io/arch: "amd64"
+pvc:
+  st
 server:
   domain: "%s-ppbo.feavy.world"
   users: "{{ parseYaml(env.ALLOWED_USERS) }}"

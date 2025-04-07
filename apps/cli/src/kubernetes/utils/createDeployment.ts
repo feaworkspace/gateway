@@ -80,7 +80,8 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
               envFrom: envFrom(container.configMap, container.secret),
               volumeMounts: container.volumes && container.volumes.map(volume => ({
                 name: volume.metadata?.name!,
-                mountPath: volume.metadata?.annotations?.mountPath!
+                mountPath: volume.metadata?.annotations?.mountPath!,
+                subPath: volume.metadata?.name!
               }))
           })),
           volumes: volumes.map(volume => ({

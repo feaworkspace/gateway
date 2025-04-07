@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import './utils/ArrayUtils';
 import WorkspaceConfigRenderer from './config/WorkspaceConfigRenderer';
 import { fromError } from 'zod-validation-error';
 import KubernetesWorkspace from './kubernetes/workspace/KubernetesWorkspace';

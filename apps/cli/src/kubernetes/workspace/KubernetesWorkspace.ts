@@ -1,6 +1,6 @@
 import KubernetesComponent from "./KubernetesComponent";
 import K8sObject from "../types/K8sObject";
-import { createDeployment, createNamespace, createServiceAccount } from "../utils";
+import { createConfigMap, createDeployment, createNamespace, createService, createServiceAccount } from "../utils";
 import { WorkspaceComponentConfig, WorkspaceConfig } from "../../config/types/WorkspaceConfig";
 import KubernetesWorkspaceComponent from "./KubernetesWorkspaceComponent";
 import KubernetesServerComponent from "./KubernetesServerComponent";
@@ -47,31 +47,57 @@ export default class KubernetesWorkspace {
                 // }
             ]
         }));
-
+        
+        const workspaceComponent = new KubernetesWorkspaceComponent(this.config, this.config.workspace);
+        const serverComponent = new KubernetesServerComponent(this.config, this.config.server, [this.config.workspace, ...this.config.components] as WorkspaceComponentConfig[]);
         const kubernetesComponents = [
             ...this.config.components.map(componentConfig => new KubernetesComponent(this.config, componentConfig as WorkspaceComponentConfig)),
-            new KubernetesWorkspaceComponent(this.config, this.config.workspace),
-            new KubernetesServerComponent(this.config, this.config.server, [this.config.workspace, ...this.config.components] as WorkspaceComponentConfig[], name)
+            workspaceComponent,
+            serverComponent,
         ];
-
-        resources.push(...kubernetesComponents.flatMap(component => component.getResources()));
 
         const containers = kubernetesComponents.flatMap(component => component.containerDefinition);
 
         resources.push(createDeployment({
-            name: name,
+            name,
             namespace: this.config.namespace,
             containers: containers,
             nodeSelector: this.config.nodeSelector,
-            // labels: {
-            //     app: this.config.name
-            // },
-            // serviceAccountName: name,
-            
             replicas: 1
+        }));
+
+        for(const component of kubernetesComponents) {
+            resources.push(...component.getResources(resources));
+        }
+
+        resources.push(createConfigMap({
+            name: `${name}-state`,
+            namespace: this.config.namespace,
+            data: {
+                "state": JSON.stringify(resources.map(it => ({
+                    apiVersion: it.apiVersion,
+                    kind: it.kind,
+                    metadata: {
+                        name: it.metadata?.name,
+                        namespace: it.metadata?.namespace
+                    }
+                })))
+            }
         }));
 
 
         return resources;
     }
+
+    private getHost(subdomain?: string) {
+        let domain = this.config.server.domain.replace("%s", subdomain || "");
+        if(!subdomain) {
+            domain = domain.substring(1); // remove separator
+        }
+        return domain;
+    }
+}
+
+function uniqueBy(array: any[], fun: (elem: any) => any) {
+    return array.filter((item, pos) => array.findIndex(it => fun(it) === fun(item)) == pos);
 }

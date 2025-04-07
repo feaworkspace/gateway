@@ -1,11 +1,11 @@
-import { V1Service } from "@kubernetes/client-node";
+import { V1Deployment, V1Service } from "@kubernetes/client-node";
 import { PortDefinition } from "./createDeployment";
 
 interface ServiceDefinition {
   name: string;
   namespace: string;
   ports: Array<PortDefinition>;
-  deploymentName: string;
+  deployment: V1Deployment;
 }
 
 export default function createService(definition: ServiceDefinition): V1Service {
@@ -18,7 +18,7 @@ export default function createService(definition: ServiceDefinition): V1Service 
     },
     spec: {
       selector: {
-        app: definition.deploymentName
+        app: definition.deployment.spec?.template.metadata?.labels?.app!
       },
       ports: definition.ports.map(port => ({
         port: port.number,
