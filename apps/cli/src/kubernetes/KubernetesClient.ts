@@ -17,7 +17,9 @@ export default class KubernetesClient {
     this.k8sObjectApi = k8s.KubernetesObjectApi.makeApiClient(kc);
   }
 
-  public async deploy(workspace: KubernetesWorkspace) {
+  public async deploy(workspace: KubernetesWorkspace, prune: boolean = false) {
+    const previousState = JSON.parse((await this.getObject<k8s.V1ConfigMap>('v1', 'ConfigMap', workspace.name('state')))?.data?.['state'] || '[]');
+
     const resources = workspace.getResources();
     for (const resource of resources) {
       try {
@@ -36,6 +38,20 @@ export default class KubernetesClient {
       } catch (e) {
         console.log(yaml.stringify(resource));
         throw e;
+      }
+    }
+
+    if (prune) {
+      for (const resource of previousState) {
+        const existing = await this.getObject(resource.apiVersion, resource.kind, resource.metadata.name);
+        if (existing && !resources.some(r => r.apiVersion === resource.apiVersion && r.kind === resource.kind && r.metadata?.name === resource.metadata.name)) {
+          try {
+            await this.k8sObjectApi.delete(resource);
+            console.log(`${resource.kind} ${resource.metadata.name} deleted`);
+          } catch (e) {
+            console.log(e);
+          }
+        }
       }
     }
   }

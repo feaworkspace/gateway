@@ -42,7 +42,7 @@ console.log(lib());
         // console.log(resources.map(resource => yaml.stringify(resource)).join('---\n'));
 
         console.log("Deploying workspace...");
-        await client.deploy(kubernetesWorkspace);
+        await client.deploy(kubernetesWorkspace, true);
         console.log("Workspace deployed successfully!");
     } catch (error: any) {
         const validationError = fromError(error);
