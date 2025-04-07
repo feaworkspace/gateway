@@ -29,13 +29,11 @@ export const workspacePortSchema = z.object({
 
 export interface WorkspaceVolumeConfig {
   name: string;
-  size: string;
   mountPath: string;
 }
 
 export const workspaceVolumeSchema = z.object({
   name: z.string(),
-  size: z.string().default('1Gi'),
   mountPath: z.string(),
 });
 
@@ -137,11 +135,21 @@ export const workspaceWorkspaceSchema = z.object({
   volumes: z.array(workspaceVolumeSchema).default([]),
 });
 
+export interface WorkspacePVCConfig {
+  storageClassName: string;
+  size: string;
+}
+
+export const workspacePVCSchema = z.object({
+  storageClassName: z.string().default('manual'),
+  size: z.string().default('1Gi'),
+});
 
 export interface WorkspaceConfig {
   name: string;
   namespace: string;
   nodeSelector: Record<string, string>;
+  pvc: WorkspacePVCConfig;
   server: WorkspaceServerConfig;
   workspace: WorkspaceWorkspaceConfig;
   components: Array<WorkspaceComponentConfig | WorkspaceIncludeConfig>;
@@ -151,6 +159,7 @@ export const workspaceSchema = z.object({
   name: z.string(),
   namespace: z.string(),
   nodeSelector: z.record(z.string()).default({}),
+  pvc: workspacePVCSchema,
   server: workspaceServerSchema,
   workspace: workspaceWorkspaceSchema,
   components: z.array(z.union([workspaceComponentSchema, workspaceIncludeSchema])).default([]),

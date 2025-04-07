@@ -6,7 +6,6 @@ interface PersistentVolumeClaimDefinition {
   storageClassName: string;
   accessModes: string[];
   size: string;
-  mountPath: string;
 }
 
 export default function createPersistentVolumeClaim(definition: PersistentVolumeClaimDefinition): V1PersistentVolumeClaim {
@@ -16,9 +15,6 @@ export default function createPersistentVolumeClaim(definition: PersistentVolume
     metadata: {
       name: definition.name,
       namespace: definition.namespace,
-      annotations: {
-        'mountPath': definition.mountPath,
-      }
     },
     spec: {
       storageClassName: definition.storageClassName,
@@ -28,7 +24,12 @@ export default function createPersistentVolumeClaim(definition: PersistentVolume
           storage: definition.size,
         },
       },
-      volumeMode: 'Filesystem',
+      ...definition.storageClassName === "manual" && {
+        hostPath: {
+          path: "/mnt" + definition.name
+        },
+      }
+      // volumeMode: 'Filesystem',
     },
   };
 }

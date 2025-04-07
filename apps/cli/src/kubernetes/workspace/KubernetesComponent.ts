@@ -36,17 +36,6 @@ export default class KubernetesComponent {
         });
     }
 
-    public get persistentVolumeClaims() {
-        return this.config.volumes && this.config.volumes.map(volume => K8SUtils.createPersistentVolumeClaim({
-            name: this.name("pvc", volume.name),
-            namespace: this.mainConfig.namespace,
-            size: volume.size,
-            mountPath: volume.mountPath,
-            accessModes: ["ReadWriteOnce"],
-            storageClassName: "openebs-hostpath",
-        })) || [];
-    }
-
     public get containerDefinition(): ContainerDefinition {
         return {
             name: this.name(),
@@ -59,11 +48,14 @@ export default class KubernetesComponent {
                 number: port.number,
                 exposed: Boolean(port.ingress)
             })),
-            volumes: this.persistentVolumeClaims,
+            volumeMounts: this.config.volumes && this.config.volumes.map(volume => ({
+                name: volume.name,
+                mountPath: volume.mountPath,
+            })) || []
         }
     };
 
     public getResources(definedResources: Array<K8sObject>): Array<K8sObject> {
-        return [this.configMap, this.secret, ...this.persistentVolumeClaims].filter(Boolean) as Array<K8sObject>;
+        return [this.configMap, this.secret].filter(Boolean) as Array<K8sObject>;
     }
 }

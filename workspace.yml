@@ -4,7 +4,8 @@ namespace: "ppbo"
 nodeSelector:
   kubernetes.io/arch: "amd64"
 pvc:
-  st
+  storageClassName: "openebs-hostpath"
+  size: "10Gi"
 server:
   domain: "%s-ppbo.feavy.world"
   users: "{{ parseYaml(env.ALLOWED_USERS) }}"
@@ -39,7 +40,7 @@ components:
   - include: "./templates/components/mongo.yml"
   # - include: "@mongo.yml"
     with:
-      mongo.volumes.mongoData.size: 10Gi
+      mongo.volumes.mongo-data.size: 10Gi
   # - name: "discord-bot"
   #   image: x
   #   secrets: 

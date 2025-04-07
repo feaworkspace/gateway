@@ -6,7 +6,7 @@ export interface ContainerDefinition {
   configMap?: V1ConfigMap;
   secret?: V1Secret;
   ports?: PortDefinition[];
-  volumes?: Array<V1PersistentVolumeClaim>;
+  volumeMounts?: Array<VolumeMountsDefinition>;
   // volumes?: Array<{
   //   name: string,
   //   accessModes: string[],
@@ -14,6 +14,11 @@ export interface ContainerDefinition {
   //   size: string
   //   mountPath: string;
   // }>;
+}
+
+export interface VolumeMountsDefinition {
+  name: string;
+  mountPath: string;
 }
 
 export interface PortDefinition {
@@ -28,12 +33,11 @@ export interface DeploymentDefinition {
   namespace: string;
   replicas: number;
   nodeSelector?: Record<string, string>;
+  volume: V1PersistentVolumeClaim;
   containers: Array<ContainerDefinition>;
 }
 
 export default function createDeployment(definition: DeploymentDefinition): V1Deployment {
-  const volumes = definition.containers.flatMap(container => container.volumes || []);
-
   return {
     apiVersion: "apps/v1",
     kind: "Deployment",
@@ -78,18 +82,18 @@ export default function createDeployment(definition: DeploymentDefinition): V1De
                 protocol: port.protocol
               })),
               envFrom: envFrom(container.configMap, container.secret),
-              volumeMounts: container.volumes && container.volumes.map(volume => ({
-                name: volume.metadata?.name!,
-                mountPath: volume.metadata?.annotations?.mountPath!,
-                subPath: volume.metadata?.name!
+              volumeMounts: container.volumeMounts && container.volumeMounts.map(volume => ({
+                name: definition.volume.metadata?.name!,
+                subPath: volume.name,
+                mountPath: volume.mountPath
               }))
           })),
-          volumes: volumes.map(volume => ({
-            name: volume.metadata?.name!,
+          volumes: definition.volume && [{
+            name: definition.volume.metadata?.name!,
             persistentVolumeClaim: {
-              claimName: volume.metadata?.name!
+              claimName: definition.volume.metadata?.name!
             }
-          }))
+          }],
         }
       }
     }

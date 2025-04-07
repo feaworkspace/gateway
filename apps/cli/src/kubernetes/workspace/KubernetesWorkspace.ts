@@ -1,6 +1,6 @@
 import KubernetesComponent from "./KubernetesComponent";
 import K8sObject from "../types/K8sObject";
-import { createConfigMap, createDeployment, createNamespace, createService, createServiceAccount } from "../utils";
+import { createConfigMap, createDeployment, createNamespace, createPersistentVolumeClaim, createService, createServiceAccount } from "../utils";
 import { WorkspaceComponentConfig, WorkspaceConfig } from "../../config/types/WorkspaceConfig";
 import KubernetesWorkspaceComponent from "./KubernetesWorkspaceComponent";
 import KubernetesServerComponent from "./KubernetesServerComponent";
@@ -16,13 +16,16 @@ export default class KubernetesWorkspace {
         // this.k8sApi = kc.makeApiClient(k8s.CoreV1Api);
     }
 
-    public getResources(): Array<K8sObject> {
-        const name = formatName(this.config.name) + "-workspace";
+    
+    public name(...suffixes: string[]) {
+        return formatName([this.config.name, "workspace", ...suffixes].join("-"));
+    }
 
+    public getResources(): Array<K8sObject> {
         const resources: Array<K8sObject> = [];
         resources.push(createNamespace(this.config.namespace));
         resources.push(...createServiceAccount({
-            name: name,
+            name: this.name("sa"),
             namespace: this.config.namespace,
             rules: [
                 {
@@ -56,14 +59,23 @@ export default class KubernetesWorkspace {
             serverComponent,
         ];
 
+        const pvc = resources.pushAndGet(createPersistentVolumeClaim({
+            name: this.name("pvc"),
+            namespace: this.config.namespace,
+            size: this.config.pvc.size,
+            accessModes: ["ReadWriteOnce"],
+            storageClassName: this.config.pvc.storageClassName,
+        }));
+
         const containers = kubernetesComponents.flatMap(component => component.containerDefinition);
 
         resources.push(createDeployment({
-            name,
+            name: this.name("deployment"),
             namespace: this.config.namespace,
             containers: containers,
             nodeSelector: this.config.nodeSelector,
-            replicas: 1
+            replicas: 1,
+            volume: pvc
         }));
 
         for(const component of kubernetesComponents) {
@@ -71,7 +83,7 @@ export default class KubernetesWorkspace {
         }
 
         resources.push(createConfigMap({
-            name: `${name}-state`,
+            name: this.name("state"),
             namespace: this.config.namespace,
             data: {
                 "state": JSON.stringify(resources.map(it => ({

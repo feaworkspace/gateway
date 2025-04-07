@@ -8,9 +8,8 @@
     MONGO_INITDB_ROOT_USERNAME: root
     MONGO_INITDB_ROOT_PASSWORD: root
   volumes:
-    - name: mongoData
+    - name: mongo-data
       mountPath: /data/db
-      size: 1Gi
 - name: express
   image: mongo-express
   tag: latest
