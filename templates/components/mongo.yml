@@ -10,7 +10,7 @@
   volumes:
     - name: mongo-data
       mountPath: /data/db
-- name: express
+- name: mongo-express
   image: mongo-express
   tag: latest
   ports:
@@ -19,7 +19,7 @@
       ingress:
         subdomain: mongo
   env:
-    PORT: "34310"
+    PORT: "{{ mongo-express.ports.mongo-express.number }}"
     ME_CONFIG_MONGODB_URL: "mongodb://127.0.0.1:{{ mongo.ports.mongo.number }}"
     ME_CONFIG_MONGODB_SERVER: "127.0.0.1"
     ME_CONFIG_MONGODB_PORT: "{{ mongo.ports.mongo.number }}"
