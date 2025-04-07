@@ -109,7 +109,7 @@ export function merge(target: any, source: any) {
             if (!target[key]) {
                 Object.assign(target, { [key]: {} });
             }
-            merge(target[key], source[key]);
+            Object.assign(target[key], merge(target[key], source[key]));
         } else {
             Object.assign(target, { [key]: source[key] });
         }
