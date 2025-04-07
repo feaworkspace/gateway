@@ -32,18 +32,15 @@ export default async function handleRoutes(event: FetchEvent) {
     return;
   }
 
-  try {
-    const result = await fetch(`http://localhost:${targetRoute.targetPort}${pathname}`, {
-      method: event.request.method,
-      headers: {
-        ...event.request.headers,
-        host: targetRoute.host,
-      },
-      body: event.request.body,
-    });
-    return result;
-  }catch (error) {
-    console.error("Error while handling route:", error);
+  return fetch(`http://localhost:${targetRoute.targetPort}${pathname}`, {
+    method: event.request.method,
+    headers: {
+      ...event.request.headers,
+      host: targetRoute.host,
+    },
+    body: event.request.body,
+  }).catch((error) => {
+    console.error("Error while fetching:", error);
     return new Response("Internal Server Error", { status: 500 });
-  }
+  });
 }
