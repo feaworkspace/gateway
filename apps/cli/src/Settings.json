@@ -5,6 +5,6 @@
     },
     "workspace": {
         "image": "ghcr.io/feavy/workspace/theia",
-        "tag": "main-c1b5aea"
+        "tag": "main-5709cd5"
     }
 }
