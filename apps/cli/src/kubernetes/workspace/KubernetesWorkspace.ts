@@ -52,7 +52,7 @@ export default class KubernetesWorkspace {
         }));
         
         const workspaceComponent = new KubernetesWorkspaceComponent(this.config, this.config.workspace);
-        const serverComponent = new KubernetesServerComponent(this.config, this.config.server, [this.config.workspace, ...this.config.components] as WorkspaceComponentConfig[]);
+        const serverComponent = new KubernetesServerComponent(this.config, this.config.server, [workspaceComponent.config, ...this.config.components] as WorkspaceComponentConfig[]);
         const kubernetesComponents = [
             ...this.config.components.map(componentConfig => new KubernetesComponent(this.config, componentConfig as WorkspaceComponentConfig)),
             workspaceComponent,
