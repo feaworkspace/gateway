@@ -5,7 +5,6 @@ import { merge } from "../../utils/ObjectUtils";
 export default class KubernetesWorkspaceComponent extends KubernetesComponent {
     public constructor(mainConfig: WorkspaceConfig, config: WorkspaceWorkspaceConfig) {
         super(mainConfig, merge(config, {
-            name: "workspace",
             namespace: mainConfig.namespace,
             env: {},
             volumes: [],

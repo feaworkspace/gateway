@@ -1,6 +1,11 @@
 import { getAuth } from "firebase-admin/auth";
+import type { FetchEvent } from "@solidjs/start/server";
 import User from "~/backend/types/User";
 import crypto from "node:crypto";
+import { getCookie } from "vinxi/http";
+
+export const PARENT_DOMAIN = process.env["PARENT_DOMAIN"] ?? "localhost";
+export const TOKEN_NAME = process.env["TOKEN_NAME"] ?? "workspace-token";
 
 export default class AuthService {
   private static readonly INSTANCE = new AuthService();
@@ -35,6 +40,14 @@ export default class AuthService {
   public getUser(token: string) {
     return this.userCache.get(token);
   }
+
+  public getUserForEvent(event: FetchEvent) {
+      const token = getCookie(event.nativeEvent, TOKEN_NAME);
+      if (!token) {
+        return;
+      }
+      return AuthService.get().getUser(token);
+    }
 }
 
 function generateToken() {

@@ -1,7 +1,7 @@
 import {APIEvent} from "@solidjs/start/server";
 import {getCookie, setCookie} from "vinxi/http";
 import {useFirebaseAdminApp} from "~/hooks/useFirebaseAdminApp";
-import AuthService from "~/backend/services/AuthService";
+import AuthService, { PARENT_DOMAIN, TOKEN_NAME } from "~/backend/services/AuthService";
 
 useFirebaseAdminApp();
 
@@ -14,9 +14,9 @@ export async function POST(event: APIEvent) {
   const {token: firebaseToken} = await event.request.json();
 
   const {token, user} = await AuthService.get().registerUser(firebaseToken);
-  setCookie(event.nativeEvent, "token", token, {
+  setCookie(event.nativeEvent, TOKEN_NAME, token, {
     httpOnly: true,
-    // domain: BASE_DOMAIN, TODO
+    domain: "." + PARENT_DOMAIN,
     path: "/",
     maxAge: 60 * 60 * 24 * 30 // 30 days
   })

@@ -17,11 +17,7 @@ export default function handleAuthentication(event: FetchEvent) {
   if (!response) {
     return;
   }
-  const token = getCookie(event.nativeEvent, "token");
-  if (!token) {
-    return response();
-  }
-  const user = AuthService.get().getUser(token);
+  const user = AuthService.get().getUserForEvent(event);
   if (!user) {
     return response();
   }

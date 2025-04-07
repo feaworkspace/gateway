@@ -5,7 +5,7 @@ import { WorkspaceComponentConfig, WorkspaceConfig } from "../../config/types/Wo
 import { formatName } from "../utils/encoding";
 
 export default class KubernetesComponent {
-    public constructor(protected readonly mainConfig: WorkspaceConfig, protected readonly config: WorkspaceComponentConfig) {
+    public constructor(protected readonly mainConfig: WorkspaceConfig, protected config: WorkspaceComponentConfig) {
     }
 
     public name(...suffixes: string[]) {

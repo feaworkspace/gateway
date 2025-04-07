@@ -10,15 +10,23 @@ export default class KubernetesServerComponent extends KubernetesComponent {
     private static readonly PORT = 28543;
 
     public constructor(mainConfig: WorkspaceConfig, private serverConfig: WorkspaceServerConfig, private componentsConfig: Array<WorkspaceComponentConfig>) {
-        super(mainConfig, merge(serverConfig, {
-            name: "server",
+        super(mainConfig, serverConfig as any);
+        
+        this.config = merge(serverConfig, {
             namespace: mainConfig.namespace,
             secrets: {
                 "FIREBASE_SERVICE_ACCOUNT_KEY": serverConfig.firebaseServiceAccountKey
             },
             env: {
-                "PORTS": JSON.stringify(componentsConfig.flatMap(it => it.ports).filter(it => it !== undefined)),
-                "ALLOWED_USERS": JSON.stringify(serverConfig.users)
+                "ROUTES": JSON.stringify(componentsConfig.flatMap(it => it.ports).filter(port => port.ingress !== undefined).map(port => ({
+                    host: this.getHost(port.ingress?.subdomain),
+                    path: port.ingress?.path || "/",
+                    auth: port.ingress?.auth || true,
+                    targetPort: port.number
+                }))),
+                "ALLOWED_USERS": JSON.stringify(serverConfig.users),
+                "PARENT_DOMAIN": serverConfig.domain.substring(serverConfig.domain.indexOf(".") + 1),
+                "TOKEN_NAME": this.name("token"),
             },
             ports: [
                 {
@@ -29,7 +37,7 @@ export default class KubernetesServerComponent extends KubernetesComponent {
                 }
             ],
             volumes: []
-        }));
+        });
     }
 
     public getResources(definedResources: Array<K8sObject>): Array<K8sObject> {
@@ -72,7 +80,7 @@ export default class KubernetesServerComponent extends KubernetesComponent {
 
     private getHost(subdomain?: string) {
         let domain = this.serverConfig.domain.replace("%s", subdomain || "");
-        if(!subdomain) {
+        if (!subdomain) {
             domain = domain.substring(1); // remove separator
         }
         return domain;

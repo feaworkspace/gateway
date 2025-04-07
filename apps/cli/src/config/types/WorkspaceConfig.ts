@@ -89,7 +89,7 @@ export interface WorkspaceServerConfig {
 }
 
 export const workspaceServerSchema = z.object({
-  name: z.string().default('workspace-webserver'),
+  name: z.string().default('server'),
   image: z.string().default(Settings.server.image),
   tag: z.string().default(Settings.server.tag),
   users: z.array(z.string()),
@@ -123,7 +123,7 @@ export interface WorkspaceWorkspaceConfig {
 }
 
 export const workspaceWorkspaceSchema = z.object({
-  name: z.string().default('workspace-workspace'),
+  name: z.string().default('workspace'),
   image: z.string().default(Settings.workspace.image),
   tag: z.string().default(Settings.workspace.tag),
   gitPrivateKey: z.string().optional(),
