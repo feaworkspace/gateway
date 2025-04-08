@@ -25,7 +25,8 @@ export default class KubernetesServerComponent extends KubernetesComponent {
                     targetPort: port.number
                 }))),
                 "ALLOWED_USERS": JSON.stringify(serverConfig.users),
-                "PARENT_DOMAIN": serverConfig.domain.substring(serverConfig.domain.indexOf(".") + 1),
+                "HOST": this.getHost(),
+                "PARENT_HOST": serverConfig.domain.substring(serverConfig.domain.indexOf(".") + 1),
                 "TOKEN_NAME": this.name("token"),
             },
             ports: [

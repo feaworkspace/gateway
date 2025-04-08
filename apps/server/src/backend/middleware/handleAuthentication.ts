@@ -1,12 +1,17 @@
-import {getCookie} from "vinxi/http";
 import {redirect} from "@solidjs/router";
 import type {FetchEvent} from "@solidjs/start/server";
 import AuthService from "~/backend/services/AuthService";
 
-const REDIRECT = () => redirect("/login", 301);
-const UNAUTHORIZED = () => new Response("Unauthorized", {status: 401});
+export const HOST = process.env["HOST"] ?? "localhost";
 
-const PRIVATE_ROUTES: Map<string, () => Response> = new Map([
+const REDIRECT = (event: FetchEvent) => {
+  let protocol = (event.request.headers.get("X-Forwarded-Proto") + ":") || new URL(event.request.url).protocol || "http:";
+
+  return redirect(protocol + "//" + HOST + "/login?redirect=" + encodeURIComponent(event.request.url), 301);
+}
+const UNAUTHORIZED = (_: FetchEvent) => new Response("Unauthorized", {status: 401});
+
+const PRIVATE_ROUTES: Map<string, (event: FetchEvent) => Response> = new Map([
   ["/", REDIRECT],
   ["/api/config", UNAUTHORIZED]
 ]);
@@ -19,6 +24,6 @@ export default function handleAuthentication(event: FetchEvent) {
   }
   const user = AuthService.get().getUserForEvent(event);
   if (!user) {
-    return response();
+    return response(event);
   }
 }

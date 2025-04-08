@@ -1,20 +1,19 @@
 import {Title} from "@solidjs/meta";
 import GitHubSignInButton from "~/components/GitHubSignInButton";
 import useAuth from "~/hooks/useAuth";
-import {useNavigate} from "@solidjs/router";
+import {useSearchParams} from "@solidjs/router";
 import {createEffect} from "solid-js";
 
 export default function Login() {
+  const [params] = useSearchParams();
   const {authState} = useAuth();
-
-  const navigate = useNavigate();
 
   createEffect(() => {
     const state = authState();
     if(state.logged) {
-      navigate("/");
+      window.location.href = params?.redirect as string || "/";
     }
-  })
+  });
 
   return (
     <main>
