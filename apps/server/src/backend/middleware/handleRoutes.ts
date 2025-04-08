@@ -1,4 +1,5 @@
 import type { FetchEvent } from "@solidjs/start/server";
+import { H3Error, proxyRequest } from "vinxi/http";
 import AuthService from "~/backend/services/AuthService";
 
 interface RouteConfig {
@@ -32,15 +33,15 @@ export default async function handleRoutes(event: FetchEvent) {
     return;
   }
 
-  return fetch(`http://localhost:${targetRoute.targetPort}${pathname}`, {
-    method: event.request.method,
-    headers: {
-      ...event.request.headers,
-      host: targetRoute.host,
-    },
-    body: event.request.body,
-  }).catch((error) => {
-    console.error("Error while fetching:", error);
-    return new Response("Internal Server Error", { status: 500 });
+  return new Promise<Response>((resolve, reject) => {
+    proxyRequest(event.nativeEvent, `http://localhost:${targetRoute.targetPort}${pathname}`, {
+      onResponse(_, response) {
+        resolve(response);   
+      }
+    }).catch((err: H3Error) => {
+      console.error(err);
+      reject(new Response(err.message, { status: err.statusCode || 500 }));
+    });
   });
+
 }
