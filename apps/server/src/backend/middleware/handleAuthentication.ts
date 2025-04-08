@@ -2,12 +2,12 @@ import {redirect} from "@solidjs/router";
 import type {FetchEvent} from "@solidjs/start/server";
 import AuthService from "~/backend/services/AuthService";
 
-export const HOST = process.env["HOST"] ?? "localhost";
+export const HOSTNAME = process.env["HOSTNAME"] ?? "localhost";
 
 const REDIRECT = (event: FetchEvent) => {
   let protocol = (event.request.headers.get("X-Forwarded-Proto") + ":") || new URL(event.request.url).protocol || "http:";
 
-  return redirect(protocol + "//" + HOST + "/login?redirect=" + encodeURIComponent(event.request.url), 301);
+  return redirect(protocol + "//" + HOSTNAME + "/login?redirect=" + encodeURIComponent(event.request.url), 301);
 }
 const UNAUTHORIZED = (_: FetchEvent) => new Response("Unauthorized", {status: 401});
 

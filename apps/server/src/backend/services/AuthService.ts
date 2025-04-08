@@ -4,7 +4,7 @@ import User from "~/backend/types/User";
 import crypto from "node:crypto";
 import { getCookie } from "vinxi/http";
 
-export const PARENT_HOST = process.env["PARENT_HOST"] ?? "localhost";
+export const PARENT_HOSTNAME = process.env["PARENT_HOSTNAME"] ?? "localhost";
 export const TOKEN_NAME = process.env["TOKEN_NAME"] ?? "workspace-token";
 
 export default class AuthService {
