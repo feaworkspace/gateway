@@ -25,6 +25,7 @@ export default async function handleRoutes(event: FetchEvent) {
 
   const targetRoute = ROUTES.find(route => route.host === host && pathname.startsWith(route.path));
   if (!targetRoute) {
+    console.log("No route found for", event.request.url);
     return new Response("Not Found", { status: 404 });
   }
 
@@ -34,12 +35,15 @@ export default async function handleRoutes(event: FetchEvent) {
   }
 
   return new Promise<Response>((resolve, reject) => {
+    console.log("Proxying request to", `http://localhost:${targetRoute.targetPort}${pathname}`);
+
     proxyRequest(event.nativeEvent, `http://localhost:${targetRoute.targetPort}${pathname}`, {
       onResponse(_, response) {
+        console.log("Resolved response for", `http://localhost:${targetRoute.targetPort}${pathname}`);
         resolve(response);   
       }
     }).catch((err: H3Error) => {
-      console.error(err);
+      console.error("Error proxying request to", `http://localhost:${targetRoute.targetPort}${pathname}`, err);
       reject(new Response(err.message, { status: err.statusCode || 500 }));
     });
   });
