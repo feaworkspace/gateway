@@ -1,7 +1,7 @@
 {
     "server": {
         "image": "ghcr.io/feavy/workspace/server",
-        "tag": "main-b44d54b"
+        "tag": "main-2006fc3"
     },
     "workspace": {
         "image": "ghcr.io/feavy/workspace/theia",
