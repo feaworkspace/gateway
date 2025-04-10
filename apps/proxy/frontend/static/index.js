@@ -68,7 +68,5 @@ function onAuthStateChanged(state) {
     // get redirect search params
     const params = new URLSearchParams(window.location.search);
     const redirect = params.get("redirect");
-    if(redirect) {
-        window.location.href = redirect;
-    }
+    window.location.href = redirect || "/";
 }
