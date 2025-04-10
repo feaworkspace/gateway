@@ -4,29 +4,36 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import logger from 'morgan';
-import * as ejs from 'ejs';
 import auth from './middlewares/auth';
 import proxy from './middlewares/proxy';
 import AuthService from './services/AuthService';
 import { PARENT_HOSTNAME, TOKEN_NAME } from './Settings';
+import * as fs from 'fs';
+import * as Settings from './Settings';
 
 var app = express();
-app.engine('html', ejs.renderFile);
-app.set('view engine', 'html');
+// app.engine('html', ejs.renderFile);
+app.set('views', path.join(__dirname, '..', 'frontend', 'views'));
+app.set('view engine', 'ejs');
 app.use(logger('dev') as any);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser() as any);
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'static')));
 
 app.use(auth());
 app.use(proxy());
 
 // FRONTEND
 
-app.get('/login', function (req, res) {
-    res.sendFile(path.join(__dirname, '..', 'frontend', 'login.html'));
+fs.readdirSync(path.join(__dirname, '..', 'frontend', 'views')).forEach(file => {
+    const fileName = file.substring(0, file.indexOf("."));
+    const path = "/" + (fileName === "index" ? "" : fileName);
+    app.get(path, function (req, res) {
+        res.render(fileName, { user: AuthService.get().getUserForRequest(req), settings: Settings });
+    });
 });
+
 
 // API
 

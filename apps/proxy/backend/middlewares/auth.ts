@@ -4,6 +4,12 @@ import { HOSTNAME, ROUTES } from "../Settings";
 import fullUrl from "../utils/fullUrl";
 
 export default () => function (req: Request, res: Response, next) {
+    if(req.get("host") === HOSTNAME) {
+        res.locals.proxy = false;
+        next();
+        return;
+    }
+
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
     const url = fullUrl(req);
 
@@ -13,20 +19,13 @@ export default () => function (req: Request, res: Response, next) {
     const targetRoute = ROUTES.find(route => route.host === host && pathname.startsWith(route.path));
     if (!targetRoute) {
         console.log("No route found for", url);
-        res.locals.proxy = false;
-        next();
+        res.status(404).send("No route found for " + url);
         return;
     }
 
     const user = AuthService.get().getUserForRequest(req);
     if (targetRoute.auth && !user) {
-        if(url.startsWith(protocol + "://" + HOSTNAME + "/login")
-            || url.startsWith(protocol + "://" + HOSTNAME + "/api/auth")) {
-            res.locals.proxy = false;
-            next();
-        } else {
-            res.redirect(protocol + "://" + HOSTNAME + "/login?redirect=" + encodeURIComponent(url));
-        }
+        res.redirect(protocol + "://" + HOSTNAME + "/login?redirect=" + encodeURIComponent(url));
         return;
     }
 

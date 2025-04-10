@@ -10,3 +10,4 @@ export const ROUTES = (JSON.parse(process.env["ROUTES"] || "[]") as RouteConfig[
     }
     return b.host.length - a.host.length;
   });
+export const WORKSPACE_NAME = process.env["WORKSPACE_NAME"] ?? "workspace";
