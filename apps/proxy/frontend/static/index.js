@@ -58,13 +58,9 @@ async function updateState(idToken) {
 
 document.getElementById("github-button").addEventListener("click", () => signInWithPopup(gitHubProvider));
 
-const authStateSpan = document.getElementById("auth-state");
 function onAuthStateChanged(state) {
-    if (state.logged) {
-        authStateSpan.innerText = `Logged in as ${state.user.email}`;
-    } else {
-        authStateSpan.innerText = "Not logged in";
-    }
+    if(!state.logged) return;
+
     // get redirect search params
     const params = new URLSearchParams(window.location.search);
     const redirect = params.get("redirect");
