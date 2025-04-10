@@ -17,14 +17,23 @@ export interface WorkspacePortConfig {
   name: string;
   number: number;
   protocol: string;
-  ingress?: WorkspaceIngressConfig | null;
+  ingress?: WorkspaceIngressConfig;
 }
 
 export const workspacePortSchema = z.object({
   name: z.string(),
   number: z.number(),
   protocol: z.string().default('TCP'),
-  ingress: workspaceIngressSchema.optional().nullable(),
+  ingress: workspaceIngressSchema.optional().nullable().transform((ingress) => {
+    if (ingress === null) {
+      return {
+        subdomain: '',
+        path: '/',
+        auth: true
+      };
+    }
+    return ingress;
+  }),
 });
 
 export interface WorkspaceVolumeConfig {
@@ -89,7 +98,7 @@ export interface WorkspaceServerConfig {
 }
 
 export const workspaceServerSchema = z.object({
-  name: z.string().default('server'),
+  name: z.string().default('ws-portal'),
   image: z.string().default(Settings.server.image),
   tag: z.string().default(Settings.server.tag),
   users: z.array(z.string()),

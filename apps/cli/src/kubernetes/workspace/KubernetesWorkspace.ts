@@ -1,6 +1,6 @@
 import KubernetesComponent from "./KubernetesComponent";
 import K8sObject from "../types/K8sObject";
-import { createConfigMap, createDeployment, createNamespace, createPersistentVolumeClaim, createService, createServiceAccount } from "../utils";
+import { createConfigMap, createDeployment, createIngress, createNamespace, createPersistentVolumeClaim, createService, createServiceAccount } from "../utils";
 import { WorkspaceComponentConfig, WorkspaceConfig } from "../../config/types/WorkspaceConfig";
 import KubernetesWorkspaceComponent from "./KubernetesWorkspaceComponent";
 import KubernetesServerComponent from "./KubernetesServerComponent";
@@ -16,7 +16,7 @@ export default class KubernetesWorkspace {
         // this.k8sApi = kc.makeApiClient(k8s.CoreV1Api);
     }
 
-    
+
     public name(...suffixes: string[]) {
         return formatName([this.config.name, "workspace", ...suffixes].join("-"));
     }
@@ -50,7 +50,7 @@ export default class KubernetesWorkspace {
                 // }
             ]
         }));
-        
+
         const workspaceComponent = new KubernetesWorkspaceComponent(this.config, this.config.workspace);
         const serverComponent = new KubernetesServerComponent(this.config, this.config.server, [workspaceComponent.config, ...this.config.components] as WorkspaceComponentConfig[]);
         const kubernetesComponents = [
@@ -58,6 +58,8 @@ export default class KubernetesWorkspace {
             workspaceComponent,
             serverComponent,
         ];
+
+        const configs = kubernetesComponents.flatMap(component => component.config);
 
         const pvc = resources.pushAndGet(createPersistentVolumeClaim({
             name: this.name("pvc"),
@@ -69,7 +71,7 @@ export default class KubernetesWorkspace {
 
         const containers = kubernetesComponents.flatMap(component => component.containerDefinition);
 
-        resources.push(createDeployment({
+        const deployment = resources.pushAndGet(createDeployment({
             name: this.name("deployment"),
             namespace: this.config.namespace,
             containers: containers,
@@ -78,9 +80,62 @@ export default class KubernetesWorkspace {
             volume: pvc
         }));
 
-        for(const component of kubernetesComponents) {
+        for (const component of kubernetesComponents) {
             resources.push(...component.getResources(resources));
         }
+
+        // ports exposed as clusterip service
+        // ports of server + ports of components which have ingress and auth = false
+        const ports = [...serverComponent.ports,
+        ...configs.flatMap(it => (it as WorkspaceComponentConfig).ports)
+            .filter(port => port.ingress !== undefined && !port.ingress?.auth)
+        ];
+
+        const service = resources.pushAndGet(createService({
+            name: this.name("clusterip"),
+            namespace: this.config.namespace,
+            ports: ports.map(port => ({
+                name: port.name,
+                protocol: port.protocol,
+                number: port.number,
+                exposed: true
+            })),
+            deployment: deployment
+        }));
+
+        // Auth ingress
+        const authIngresses = configs.flatMap(it => it.ports)
+            .filter(port => port.ingress !== undefined && port.ingress?.auth)
+            .map(port => port.ingress)
+            .sort((a, b) => b!.subdomain.length + b!.path.length - (a!.subdomain.length + a!.path.length));
+
+        resources.pushAndGet(createIngress({
+            name: this.name("auth-ingress"),
+            namespace: this.config.namespace,
+            rules: uniqueBy(authIngresses, it => this.getHost(it.subdomain)).map(ingress => ({
+                host: this.getHost(ingress.subdomain),
+                port: KubernetesServerComponent.PORT,
+                path: "/",
+                service: service // ?
+            }))
+        }));
+
+        // Public ingress
+        const ingresses = configs.flatMap(it => it.ports)
+            .filter(port => port.ingress !== undefined && !port.ingress?.auth)
+            .map(port => port.ingress)
+            .sort((a, b) => b!.subdomain.length + b!.path.length - (a!.subdomain.length + a!.path.length));
+
+        resources.pushAndGet(createIngress({
+            name: this.name("public-ingress"),
+            namespace: this.config.namespace,
+            rules: ingresses.map(ingress => ({
+                host: this.getHost(ingress?.subdomain || ""),
+                port: KubernetesServerComponent.PORT,
+                path: ingress?.path || "/",
+                service: service // ?
+            }))
+        }));
 
         resources.push(createConfigMap({
             name: this.name("state"),
@@ -103,7 +158,7 @@ export default class KubernetesWorkspace {
 
     private getHost(subdomain?: string) {
         let domain = this.config.server.domain.replace("%s", subdomain || "");
-        if(!subdomain) {
+        if (!subdomain) {
             domain = domain.substring(1); // remove separator
         }
         return domain;

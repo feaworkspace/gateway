@@ -46,7 +46,7 @@ export default function createIngress({ name, namespace, rules }: IngressDefinit
         host: rule.host,
         http: {
           paths: [{
-            path: "/",
+            path: rule.path,
             pathType: "Prefix",
             backend: {
               service: {

@@ -14,7 +14,9 @@ export default class KubernetesWorkspaceComponent extends KubernetesComponent {
                     protocol: "TCP",
                     number: 28544,
                     ingress: {
-                        subdomain: "theia"
+                        subdomain: "theia",
+                        path: "/",
+                        auth: true
                     }
                 }
             ]
