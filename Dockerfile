@@ -2,8 +2,8 @@
 
 FROM node:20-slim AS base
 
-LABEL org.opencontainers.image.source=https://github.com/feavy/workspace
-LABEL org.opencontainers.image.description="Workspace Proxy Docker Image"
+LABEL org.opencontainers.image.source=https://github.com/feaworkspace/gateway
+LABEL org.opencontainers.image.description="Workspace Gateway Docker Image"
 LABEL org.opencontainers.image.licenses=MIT
 
 ENV PNPM_HOME="/pnpm"
