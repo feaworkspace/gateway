@@ -10,6 +10,8 @@ import AuthService from './services/AuthService';
 import { PARENT_HOSTNAME, TOKEN_NAME } from './Settings';
 import * as fs from 'fs';
 import * as Settings from './Settings';
+import { octClient } from './oct/OctClient';
+import { credentialsManager } from './oct/CredentialsManager';
 
 var app = express();
 // app.engine('html', ejs.renderFile);
@@ -38,8 +40,6 @@ fs.readdirSync(path.join(__dirname, '..', 'frontend', 'views')).forEach(file => 
 // API
 
 app.post('/api/auth', async function (req, res) {
-    console.log("Auth request", req.body);
-
     const existingUser = AuthService.get().getUserForRequest(req);
     if (existingUser) {
         res.json({ logged: true, user: existingUser });
@@ -55,16 +55,43 @@ app.post('/api/auth', async function (req, res) {
         res.cookie(TOKEN_NAME, token, {
             maxAge: 60 * 60 * 24 * 30, // 30 days
             httpOnly: true,
-            domain: "." + PARENT_HOSTNAME
+            domain: !Settings.IS_LOCALHOST && "." + PARENT_HOSTNAME
         });
 
         res.json(user);
-
     } catch (e) {
         console.error("Error", e);
         res.status(500).json({ logged: false, error: "Error" });
     }
 });
 
+octClient.onReady = async () => {
+    console.log("[OCT] Ready");
+
+    const user1Token = await credentialsManager.generateUserJwt({
+        id: "user1",
+        name: "User 1",
+        authProvider: "system",
+        email: "user1@workspace.com"
+    });
+
+    console.log("[OCT] User 1 JWT", user1Token);
+
+    const user2Token = await credentialsManager.generateUserJwt({
+        id: "user2",
+        name: "User 2",
+        authProvider: "system",
+        email: "user1@workspace.com"
+    });
+
+    console.log("[OCT] User 2 JWT", user2Token);
+
+    try {
+        await octClient.createRoom();
+        console.log("[OCT] Room created");
+    } catch (e) {
+        console.error("[OCT] Error creating room", e);
+    }
+}
 
 export default app;
