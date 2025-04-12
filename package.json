@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "tsx ./backend/bin/www.ts"
+    "start": "tsx ./backend/bin/www.ts",
+    "oct-server": "oct-server start"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -14,7 +15,8 @@
     "firebase-admin": "^13.2.0",
     "http-proxy-middleware": "^3.0.3",
     "morgan": "~1.9.1",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.2",
+    "open-collaboration-server": "^0.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
