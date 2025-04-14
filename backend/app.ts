@@ -12,6 +12,9 @@ import * as fs from 'fs';
 import * as Settings from './Settings';
 import { octClient } from './oct/OctClient';
 import { credentialsManager } from './oct/CredentialsManager';
+import OctRoomInstance from './oct/OctRoomInstance';
+import { getUser } from './utils/getUser';
+import cors from 'cors';
 
 var app = express();
 // app.engine('html', ejs.renderFile);
@@ -31,8 +34,8 @@ app.use(proxy());
 fs.readdirSync(path.join(__dirname, '..', 'frontend', 'views')).forEach(file => {
     const fileName = file.substring(0, file.indexOf("."));
     const path = "/" + (fileName === "index" ? "" : fileName);
-    app.get(path, function (req, res) {
-        res.render(fileName, { user: AuthService.get().getUserForRequest(req), settings: Settings });
+    app.get(path, async function (req, res) {
+        res.render(fileName, { user: await getUser(req), settings: Settings });
     });
 });
 
@@ -40,16 +43,16 @@ fs.readdirSync(path.join(__dirname, '..', 'frontend', 'views')).forEach(file => 
 // API
 
 app.post('/api/auth', async function (req, res) {
-    const existingUser = AuthService.get().getUserForRequest(req);
+    const existingUser = await getUser(req);
     if (existingUser) {
         res.json({ logged: true, user: existingUser });
         return;
     }
 
     try {
-        const firebaseToken = req.body.token;
+        const { token: firebaseToken, userData } = req.body;
 
-        const { user, token } = await AuthService.get().registerUser(firebaseToken);
+        const { user, token } = await AuthService.get().registerUser(firebaseToken, userData);
 
         // Set the cookie
         res.cookie(TOKEN_NAME, token, {

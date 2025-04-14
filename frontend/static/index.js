@@ -21,7 +21,7 @@ const app = initializeApp(firebaseConfig);
 
 const auth = getAuth();
 const gitHubProvider = new GithubAuthProvider()
-    .addScope("user:email");
+    .addScope("user:email read:user");
 
 async function signInWithPopup(provider) {
     const credential = await firebaseSignInWithPopup(auth, provider)
@@ -31,25 +31,27 @@ async function signInWithPopup(provider) {
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         // User is signed in, get the ID token and update the state
-        const idToken = await user.getIdToken();
-        updateState(idToken);
+        updateState(user);
     } else {
         // User is signed out
         onAuthStateChanged({ logged: false });
     }
 });
 
-async function updateState(idToken) {
+async function updateState(user) {
     try {
-        const user = await fetch("/api/auth", {
+        const remoteUser = await fetch("/api/auth", {
             credentials: "include",
             method: "POST",
-            body: JSON.stringify({ token: idToken }),
+            body: JSON.stringify({
+                token: await user.getIdToken(),
+                userData: {...user}
+            }),
             headers: {
                 "content-type": "application/json"
             }
         }).then(rep => rep.json());
-        onAuthStateChanged({ logged: true, user });
+        onAuthStateChanged({ logged: true, user: remoteUser });
     } catch (e) {
         console.error(e);
         onAuthStateChanged({ logged: false });

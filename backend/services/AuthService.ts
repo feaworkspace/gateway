@@ -1,8 +1,6 @@
 import { getAuth } from "firebase-admin/auth";
-import crypto from "node:crypto";
 import User from "../types/User";
-import { TOKEN_NAME } from "../Settings";
-import { Request } from "express";
+import { credentialsManager } from "../oct/CredentialsManager";
 
 export default class AuthService {
   private static readonly INSTANCE = new AuthService();
@@ -10,43 +8,22 @@ export default class AuthService {
     return this.INSTANCE;
   }
 
-  private readonly userCache: Map<string, User> = new Map();
-  private readonly tokenByUid: Map<string, string> = new Map();
-
-  public async registerUser(firebaseToken: string): Promise<{user: User, token: string}> {
+  public async registerUser(firebaseToken: string, userData: any): Promise<{user: User, token: string}> {
     const decodedToken = await getAuth().verifyIdToken(firebaseToken);
-    const existingToken = this.tokenByUid.get(decodedToken.uid);
-    if(existingToken) {
-      return {token: existingToken, user: this.userCache.get(existingToken)!};
-    }
+    
+    const firebaseUser = await getAuth().getUser(decodedToken.uid);
+    const authProvider = firebaseUser.providerData[0]?.providerId;
 
-    const userData = await getAuth().getUser(decodedToken.uid);
+    const id = decodedToken.uid;
+    const name = authProvider === "github.com" && userData?.reloadUserInfo?.screenName || "inconnu";
+    const email = decodedToken.email || firebaseUser.email || userData.providerData?.[0]?.email
 
-    const email = decodedToken.email || userData.email || userData.providerData?.[0]?.email;
+    const user = { id, name, email, authProvider };
 
-    const token = generateToken();
+    console.log("Register user", user);
 
-    const user = { uid: decodedToken.uid, email };
-
-    this.userCache.set(token, user);
-    this.tokenByUid.set(decodedToken.uid, token);
+    const token = await credentialsManager.generateJwt(user);
 
     return {user, token};
   }
-
-  public getUser(token: string) {
-    return this.userCache.get(token);
-  }
-
-  public getUserForRequest(event: Request) {
-      const token = event.cookies[TOKEN_NAME];
-      if (!token) {
-        return;
-      }
-      return AuthService.get().getUser(token);
-    }
-}
-
-function generateToken() {
-  return btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))));
 }

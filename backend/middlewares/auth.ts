@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import AuthService from "../services/AuthService";
 import { HOSTNAME, ROUTES } from "../Settings";
 import fullUrl from "../utils/fullUrl";
+import { getUser } from "../utils/getUser";
 
 export default () => function (req: Request, res: Response, next) {
     if(req.get("host") === HOSTNAME) {
@@ -23,7 +23,7 @@ export default () => function (req: Request, res: Response, next) {
         return;
     }
 
-    const user = AuthService.get().getUserForRequest(req);
+    const user = getUser(req);
     if (targetRoute.auth && !user) {
         res.redirect(protocol + "://" + HOSTNAME + "/login?redirect=" + encodeURIComponent(url));
         return;
