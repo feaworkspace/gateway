@@ -1,6 +1,7 @@
 import { ConnectionProvider, SocketIoTransportProvider } from 'open-collaboration-protocol';
 import { credentialsManager } from './CredentialsManager';
 import OctRoomInstance from './OctRoomInstance';
+import { OCT_SERVER_URL } from '../Settings';
 
 class OctClient {
     private authHandler: ConnectionProvider;
@@ -24,8 +25,8 @@ class OctClient {
         console.log("[OCT] System JWT", systemToken);
 
         this.authHandler = new ConnectionProvider({
-            url: "http://127.0.0.1:8100",
-            client: "gateway",
+            url: OCT_SERVER_URL,
+            client: "system",
             fetch: fetch,
             opener: url => console.log("[OCT] Open URL", url),
             transports: [SocketIoTransportProvider],
@@ -44,7 +45,7 @@ class OctClient {
 
         const connection = await this.authHandler.connect(roomClaim.roomToken);
 
-        return await OctRoomInstance.fromConnection(connection);
+        return await OctRoomInstance.fromConnection(connection, roomClaim.roomId);
 
         // connection.peer.onJoinRequest = async (peerId, accept) => {
         //     console.log("[OCT] Peer join request", peerId);

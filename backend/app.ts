@@ -17,6 +17,17 @@ import { getUser } from './utils/getUser';
 import cors from 'cors';
 
 var app = express();
+
+app.use(cors(function (req, callback) {
+  var corsOptions;
+  if (Settings.CORS_ALLOWED_ORIGINS.indexOf(req.header('Origin')) !== -1) {
+    corsOptions = { origin: true, credentials: true };
+  } else {
+    corsOptions = { origin: false } ;
+  }
+  callback(null, corsOptions);
+}));
+
 // app.engine('html', ejs.renderFile);
 app.set('views', path.join(__dirname, '..', 'frontend', 'views'));
 app.set('view engine', 'ejs');
@@ -68,33 +79,27 @@ app.post('/api/auth', async function (req, res) {
     }
 });
 
+let octRoom: OctRoomInstance | undefined = undefined;
 octClient.onReady = async () => {
-    console.log("[OCT] Ready");
-
-    const user1Token = await credentialsManager.generateUserJwt({
-        id: "user1",
-        name: "User 1",
-        authProvider: "system",
-        email: "user1@workspace.com"
-    });
-
-    console.log("[OCT] User 1 JWT", user1Token);
-
-    const user2Token = await credentialsManager.generateUserJwt({
-        id: "user2",
-        name: "User 2",
-        authProvider: "system",
-        email: "user1@workspace.com"
-    });
-
-    console.log("[OCT] User 2 JWT", user2Token);
-
     try {
-        await octClient.createRoom();
+        octRoom = await octClient.createRoom();
         console.log("[OCT] Room created");
-    } catch (e) {
+    } catch(e) {
         console.error("[OCT] Error creating room", e);
     }
 }
+
+app.get('/api/collaboration/room', async function (req, res) {
+    const user = await getUser(req);
+    if (!user) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+
+    res.json({
+        loginToken: req.cookies[TOKEN_NAME],
+        roomId: octRoom?.id
+    });
+});
 
 export default app;

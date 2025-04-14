@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
     "debug": "~2.6.9",
     "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
@@ -18,9 +19,9 @@
     "open-collaboration-protocol": "0.2.0",
     "open-collaboration-yjs": "0.2.0",
     "socket.io-client": "^4.5.3",
+    "tsx": "^4.19.2",
     "y-protocols": "^1.0.6",
-    "yjs": "^13.6.7",
-    "tsx": "^4.19.2"
+    "yjs": "^13.6.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",

@@ -13,11 +13,10 @@ export default class OctRoomInstance {
     protected yjs = new Y.Doc();
     protected yjsAwareness = new awarenessProtocol.Awareness(this.yjs);
 
-    private constructor(private readonly connection: ProtocolBroadcastConnection) { }
-
-
-    public static async fromConnection(connection: ProtocolBroadcastConnection): Promise<OctRoomInstance> {
-        const instance = new OctRoomInstance(connection);
+    private constructor(private readonly connection: ProtocolBroadcastConnection, public readonly id: string) { }
+    
+    public static async fromConnection(connection: ProtocolBroadcastConnection, roomId: string): Promise<OctRoomInstance> {
+        const instance = new OctRoomInstance(connection, roomId);
         await instance.init();
         return instance;
     }
@@ -28,17 +27,11 @@ export default class OctRoomInstance {
 
         await this.registerProtocolEvents(this.connection);
         await this.registerFileEvents();
-
-        this.yjsAwareness.on('change', (changes) => {
-            console.log(this.yjsAwareness.getStates());
-        });
     }
 
     protected async registerProtocolEvents(connection: ProtocolBroadcastConnection) {
         connection.peer.onJoinRequest(async (_, user) => {
             console.log('[OCT] Peer join request', user.email ? `${user.name} (${user.email})` : user.name);
-
-            // const roots = await this.workspaceService.roots;
             return {
                 workspace: {
                     name: "Project",
@@ -55,8 +48,8 @@ export default class OctRoomInstance {
                 capabilities: {},
                 permissions: {readonly: false},
                 workspace: {
-                    name: "Project", // this.workspaceService.workspace?.name ?? nls.localize('theia/collaboration/collaboration', 'Collaboration'),
-                    folders: ["workspace"] // TODO roots.map(e => e.name)
+                    name: "Project",
+                    folders: ["workspace"]
                 }
             };
             connection.peer.init(peer.id, data);
@@ -70,9 +63,6 @@ export default class OctRoomInstance {
         });
         connection.room.onPermissions((_, permissions) => {
             console.log('[OCT] Permissions changed', permissions);
-            // if (this.fileSystem) {
-            //     this.fileSystem.readonly = permissions.readonly;
-            // }
         });
         connection.peer.onInfo((_, peer) => {
             console.log('[OCT] Peer info', peer);
@@ -81,7 +71,6 @@ export default class OctRoomInstance {
         });
         connection.peer.onInit(async (_, data) => {
             console.log('[OCT] Peer init', data);
-            // await this.initialize(data);
         });
         console.log("set fs handlers");
     }
