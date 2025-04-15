@@ -3,7 +3,7 @@ import { HOSTNAME, ROUTES } from "../Settings";
 import fullUrl from "../utils/fullUrl";
 import { getUser } from "../utils/getUser";
 
-export default () => function (req: Request, res: Response, next) {
+export default () => async function (req: Request, res: Response, next) {
     if(req.get("host") === HOSTNAME) {
         res.locals.proxy = false;
         next();
@@ -23,7 +23,7 @@ export default () => function (req: Request, res: Response, next) {
         return;
     }
 
-    const user = getUser(req);
+    const user = await getUser(req);
     if (targetRoute.auth && !user) {
         res.redirect(protocol + "://" + HOSTNAME + "/login?redirect=" + encodeURIComponent(url));
         return;
