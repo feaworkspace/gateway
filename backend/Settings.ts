@@ -1,8 +1,8 @@
 import { RouteConfig } from "./types/RouteConfig";
 
-export const PORT = parseInt(process.env["PORT"] ?? "3000");
+export const PORT = parseInt(process.env["PORT"] ?? "3001");
 export const HOSTNAME = process.env["HOSTNAME"] ?? "localhost"+":"+PORT;
-export const THEIA_HOSTNAME = process.env["THEIA_HOSTNAME"] ?? "localhost"+":"+3001;
+export const THEIA_HOSTNAME = process.env["THEIA_HOSTNAME"] ?? "localhost"+":"+3000;
 export const PARENT_HOSTNAME = HOSTNAME.substring(HOSTNAME.indexOf(".") + 1);
 export const IS_LOCALHOST = !process.env["HOSTNAME"];
 export const TOKEN_NAME = process.env["TOKEN_NAME"] ?? "workspace-token";
