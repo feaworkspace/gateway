@@ -27,6 +27,15 @@ export default class OctRoomInstance {
 
         await this.registerProtocolEvents(this.connection);
         await this.registerFileEvents();
+        this.initTerminals();
+    }
+    initTerminals() {
+        // initialize shared map
+        const yTerminals = this.yjs.getMap<boolean>('terminals');
+        this.yjs.transact(() => {
+            yTerminals.set("sync", true);
+            yTerminals.delete("sync");
+        })
     }
 
     protected async registerProtocolEvents(connection: ProtocolBroadcastConnection) {
