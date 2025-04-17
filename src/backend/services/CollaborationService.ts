@@ -1,19 +1,19 @@
-import { ConnectionProvider, SocketIoTransportProvider } from 'open-collaboration-protocol';
-import { credentialsManager } from './CredentialsManager';
-import OctRoomInstance from './OctRoomInstance';
+import { ConnectionProvider, Deferred, SocketIoTransportProvider } from 'open-collaboration-protocol';
+import OctRoomInstance from '../domain/collaboration/OctRoomInstance';
 import { OCT_SERVER_URL } from '../Settings';
+import JwtService from './JwtService';
+import { Singleton } from 'tydi';
 
-class OctClient {
+@Singleton
+export default class CollaborationService {
+    public constructor(private readonly jwtService: JwtService) {}
+
     private authHandler: ConnectionProvider;
 
-    public onReady: () => void = () => { };
-
-    public constructor() {
-        this.init();
-    }
+    private room: Deferred<OctRoomInstance> = new Deferred();
 
     public async init() {
-        const systemToken = await credentialsManager.generateUserJwt(
+        const systemJwt = await this.jwtService.createJwt(
             {
                 id: "system",
                 name: "System",
@@ -22,7 +22,7 @@ class OctClient {
             }
         );
 
-        console.log("[OCT] System JWT", systemToken);
+        console.log("[OCT] System JWT", systemJwt);
 
         this.authHandler = new ConnectionProvider({
             url: OCT_SERVER_URL,
@@ -30,13 +30,15 @@ class OctClient {
             fetch: fetch,
             opener: url => console.log("[OCT] Open URL", url),
             transports: [SocketIoTransportProvider],
-            userToken: systemToken // TODO localStorage.getItem(COLLABORATION_AUTH_TOKEN) ?? undefined
+            userToken: systemJwt // TODO localStorage.getItem(COLLABORATION_AUTH_TOKEN) ?? undefined
         });
 
-        this.onReady();
+        
+        const room = await this.createRoom();
+        this.room.resolve(room);
     }
 
-    public async createRoom() {
+    private async createRoom() {
         const roomClaim = await this.authHandler.createRoom({
             reporter: info => console.log("[OCT]", info),
             // abortSignal: tokens => console.log("[OCT] Room creation aborted", tokens),
@@ -62,6 +64,8 @@ class OctClient {
         //     connection
         // });
     }
-}
 
-export const octClient = new OctClient();
+    public getRoom() {
+        return this.room.promise
+    }
+}

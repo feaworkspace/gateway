@@ -1,6 +1,7 @@
 import { Request } from "express";
-import { credentialsManager } from "../oct/CredentialsManager";
 import { TOKEN_NAME } from "../Settings";
+import { Dependencies } from "tydi";
+import AuthService from "../services/AuthService";
 
 export async function getUser(req: Request) {
     const jwt = req.cookies[TOKEN_NAME];
@@ -8,7 +9,7 @@ export async function getUser(req: Request) {
         return undefined;
     }
     try {
-        return await credentialsManager.getUser(jwt);
+        return await Dependencies.get<AuthService>(AuthService.name).getUserFromJwt(jwt);
     } catch(e) {
         return undefined;
     }
