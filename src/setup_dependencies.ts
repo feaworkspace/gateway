@@ -55,6 +55,5 @@ proxyMiddleware_16.init();
 httpServer_2.init();
 authController_6.init();
 collaborationController_10.init();
-collaborationController_10.initDebug();
 frontendController_12.init();
 collaborationService_20.init();

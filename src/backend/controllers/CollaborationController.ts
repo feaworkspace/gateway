@@ -21,7 +21,6 @@ export default class CollaborationController {
         this.app.express.get('/api/collaboration/room', this.getRoom.bind(this));
     }
 
-    @Startup
     private async initDebug() {
         const room = await this.collaborationService.getRoom();
 

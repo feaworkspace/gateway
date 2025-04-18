@@ -79,14 +79,13 @@ export default class CollaborationRoom {
             console.log('[OCT] Permissions changed', permissions);
         });
         connection.peer.onInfo((_, peer) => {
-            console.log('[OCT] Peer info', peer);
+            console.log('[OCT] Peer info', peer.id, peer.name);
             this.yjsAwareness.setLocalStateField('peer', peer.id);
             this.identity.resolve(peer);
         });
         connection.peer.onInit(async (_, data) => {
             console.log('[OCT] Peer init', data);
         });
-        console.log("set fs handlers");
     }
 
     private registerFileEvents() {

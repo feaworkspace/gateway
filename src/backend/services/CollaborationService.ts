@@ -23,7 +23,7 @@ export default class CollaborationService {
             }
         );
 
-        console.log("[OCT] System JWT", systemJwt);
+        // console.log("[OCT] System JWT", systemJwt);
 
         this.authHandler = new ConnectionProvider({
             url: OCT_SERVER_URL,
@@ -31,7 +31,7 @@ export default class CollaborationService {
             fetch: fetch,
             opener: url => console.log("[OCT] Open URL", url),
             transports: [SocketIoTransportProvider],
-            userToken: systemJwt // TODO localStorage.getItem(COLLABORATION_AUTH_TOKEN) ?? undefined
+            userToken: systemJwt
         });
 
         
@@ -52,10 +52,10 @@ export default class CollaborationService {
         while(true) {
             try {
                 const roomClaim = await this.authHandler.createRoom({
-                    reporter: info => console.log("[OCT]", info),
+                    reporter: info => console.log("[OCT] Create room", info.code),
                     // abortSignal: tokens => console.log("[OCT] Room creation aborted", tokens),
                 });
-                console.log("[OCT] Room created", roomClaim);
+                console.log("[OCT] Room created", roomClaim.roomId);
 
                 const connection = await this.authHandler.connect(roomClaim.roomToken);
 
