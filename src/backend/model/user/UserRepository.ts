@@ -7,17 +7,15 @@ import { WORKSPACE_NAME } from '../../Settings';
 export default class UserRepository {
     private readonly firestore = getFirestore();
 
-    private readonly doc = this.firestore.collection("workspaces").doc(WORKSPACE_NAME);
-    private readonly collection = this.doc.collection("users");
+    private readonly collection = this.firestore.collection(WORKSPACE_NAME);
 
     public constructor() {
     }
     
     @Startup
     public async init() {
-        const doc = await this.doc.get();
-        if(!doc.exists) {
-            await this.doc.create({});
+        const collection = await this.collection.get();
+        if(collection.empty) {
             this.collection.doc("test@example.com").create({
                 role: "user",
                 status: "pending"
