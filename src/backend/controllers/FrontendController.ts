@@ -4,6 +4,7 @@ import * as path from "path";
 import { getUser } from "../utils/getUser";
 import * as Settings from "../Settings";
 import { Singleton, Startup } from "tydi";
+import fullUrl from "../utils/fullUrl";
 
 @Singleton
 export default class FrontendController {
@@ -17,7 +18,14 @@ export default class FrontendController {
             const fileName = file.substring(0, file.indexOf("."));
             const path = "/" + (fileName === "index" ? "" : fileName);
             this.app.express.get(path, async function (req, res) {
-                res.render(fileName, { user: await getUser(req), settings: Settings });
+                const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+                const url = fullUrl(req);
+                const user = await getUser(req);
+                if(path === "/" && !user) {
+                    res.redirect(protocol + "://" + Settings.HOSTNAME + "/login?redirect=" + encodeURIComponent(url));
+                    return;
+                }
+                res.render(fileName, { user, settings: Settings });
             });
         });
     }

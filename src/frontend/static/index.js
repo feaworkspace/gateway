@@ -40,7 +40,7 @@ auth.onAuthStateChanged(async (user) => {
 
 async function updateState(user) {
     try {
-        const remoteUser = await fetch("/api/auth", {
+        const reponse = await fetch("/api/auth", {
             credentials: "include",
             method: "POST",
             body: JSON.stringify({
@@ -51,17 +51,21 @@ async function updateState(user) {
                 "content-type": "application/json"
             }
         }).then(rep => rep.json());
-        onAuthStateChanged({ logged: true, user: remoteUser });
+        onAuthStateChanged(reponse);
     } catch (e) {
         console.error(e);
-        onAuthStateChanged({ logged: false });
+        onAuthStateChanged({ logged: false, error: e });
     }
 }
 
+const loginStatusElem = document.getElementById("login-status");
 document.getElementById("github-button").addEventListener("click", () => signInWithPopup(gitHubProvider));
 
 function onAuthStateChanged(state) {
-    if(!state.logged) return;
+    if(!state.logged) {
+        loginStatusElem.innerText = state.error;
+        return;
+    }
 
     // get redirect search params
     const params = new URLSearchParams(window.location.search);

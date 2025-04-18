@@ -27,19 +27,24 @@ export default class AuthController {
         try {
             const { token: firebaseToken, userData } = req.body;
     
-            const { user, token } = await this.authService.createUserJwt(firebaseToken, userData);
+            const userJwt = await this.authService.createUserJwt(firebaseToken, userData);
+
+            if(!userJwt) {
+                res.json({ logged: false, error: "Account is not active." });
+                return;
+            }
     
             // Set the cookie
-            res.cookie(TOKEN_NAME, token, {
+            res.cookie(TOKEN_NAME, userJwt?.token, {
                 maxAge: 60 * 60 * 24 * 30, // 30 days
                 httpOnly: true,
                 domain: !Settings.IS_LOCALHOST && "." + Settings.PARENT_HOSTNAME
             });
     
-            res.json(user);
+            res.json({ logged: true, user: userJwt.user });
         } catch (e) {
             console.error("Error", e);
-            res.status(500).json({ logged: false, error: "Error" });
+            res.status(500).json({ logged: false, error: e });
         }
     }
 }
