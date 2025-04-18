@@ -2,7 +2,7 @@ import { ConnectionProvider, Deferred, SocketIoTransportProvider } from 'open-co
 import OctRoomInstance from '../domain/collaboration/OctRoomInstance';
 import { OCT_SERVER_URL } from '../Settings';
 import JwtService from './JwtService';
-import { Singleton } from 'tydi';
+import { Singleton, Startup } from 'tydi';
 
 @Singleton
 export default class CollaborationService {
@@ -12,6 +12,7 @@ export default class CollaborationService {
 
     private room: Deferred<OctRoomInstance> = new Deferred();
 
+    @Startup
     public async init() {
         const systemJwt = await this.jwtService.createJwt(
             {

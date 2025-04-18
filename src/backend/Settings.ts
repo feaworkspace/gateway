@@ -1,4 +1,4 @@
-import { RouteConfig } from "./domain/types/RouteConfig";
+import { RouteConfig } from "./domain/route/RouteConfig";
 
 export const PORT = parseInt(process.env["PORT"] ?? "3001");
 export const HOSTNAME = process.env["HOSTNAME"] ?? "localhost"+":"+PORT;

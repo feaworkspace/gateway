@@ -1,4 +1,4 @@
-import { ClientTextSelection, Deferred, FileSystemDirectory, FileType, InitData, Peer, ProtocolBroadcastConnection, VERSION } from "open-collaboration-protocol";
+import { Deferred, InitData, Peer, ProtocolBroadcastConnection, VERSION } from "open-collaboration-protocol";
 import { OpenCollaborationYjsProvider } from "open-collaboration-yjs";
 
 import * as fpath from 'path';
@@ -85,55 +85,7 @@ export default class OctRoomInstance {
     }
 
     private registerFileEvents() {
-        const connection = this.connection;
-        connection.fs.onStat(async (_, path) => {
-            console.log('[OCT] Stat', path);
-            try {
-                const stat = await fs.promises.stat(root(path));
-                return {
-                    type: stat.isDirectory() ? FileType.Directory : FileType.File,
-                    mtime: stat.mtime.getTime(),
-                    ctime: stat.ctime.getTime(),
-                    size: stat.size
-                };
-            } catch (e) {
-                throw new Error('EntryNotFound (FileSystemError)');
-            }
-        });
-        connection.fs.onReaddir(async (_, path) => {
-            console.log('[OCT] Read directory', path);
-            const files = await fs.promises.readdir(root(path));
-            return files.reduce((acc, file) => {
-                acc[file] = fs.statSync(fpath.join(root(path), file)).isDirectory() ? FileType.Directory : FileType.File;
-                return acc;
-            }, {} as FileSystemDirectory);
-        });
-        connection.fs.onReadFile(async (_, path) => {
-            console.log('[OCT] Read file', path);
-            return {
-                content: await fs.promises.readFile(root(path))
-            };
-        });
-        connection.fs.onDelete(async (_, path) => {
-            console.log('[OCT] Delete', path);
-            await fs.promises.rm(root(path), { recursive: true, force: true });
-        });
-        connection.fs.onRename(async (_, oldPath, newPath) => {
-            console.log('[OCT] Rename', oldPath, newPath);
-            await fs.promises.rename(root(oldPath), root(newPath));
-        });
-        connection.fs.onMkdir(async (_, path) => {
-            console.log('[OCT] Mkdir', path);
-            await fs.promises.mkdir(root(path), { recursive: true });
-        });
-        connection.fs.onWriteFile(async (_, path, content) => {
-            console.log('[OCT] Write file', path, content);
-            await fs.promises.writeFile(root(path), content.content);
-        });
-        connection.fs.onChange(async (_, changes) => {
-            console.error('[OCT] File changes unhandled', changes);
-        });
-        connection.editor.onOpen(async (_, path) => {
+        this.connection.editor.onOpen(async (_, path) => {
             console.log('[OCT] Open editor', path);
             const unknownModel = !this.yjs.share.has(path);
             const ytext = this.yjs.getText(path);
@@ -145,6 +97,8 @@ export default class OctRoomInstance {
                 });
             }
         });
+
+        // Others event are handled by default Theia RemoteFileSystem
     }
 }
 
