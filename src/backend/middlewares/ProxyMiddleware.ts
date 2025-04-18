@@ -26,7 +26,7 @@ export default class ProxyMiddleware {
     @Startup
     @Priority(99)
     public init() {
-        this.app.express.use(this.handleProxy);
+        this.app.express.use(this.handleProxy.bind(this));
     }
 
     private async handleProxy(req: Request, res: Response, next) {

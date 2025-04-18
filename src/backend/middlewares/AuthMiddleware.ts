@@ -12,7 +12,7 @@ export default class AuthMiddleware {
     @Startup
     @Priority(100)
     public init() {
-        this.app.express.use(this.handleAuth);
+        this.app.express.use(this.handleAuth.bind(this));
     }
 
     private async handleAuth(req: Request, res: Response, next) {
