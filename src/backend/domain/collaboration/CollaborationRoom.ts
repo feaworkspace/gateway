@@ -6,17 +6,21 @@ import * as fs from 'fs';
 import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
 
-export default class OctRoomInstance {
+export default class CollaborationRoom {
     protected peers = new Map<string, Peer>();
     private identity: Deferred<Peer> = new Deferred<Peer>();
     private yjsProvider: OpenCollaborationYjsProvider;
     protected yjs = new Y.Doc();
     protected yjsAwareness = new awarenessProtocol.Awareness(this.yjs);
+    public onDisconnect = (room: CollaborationRoom) => {};
 
-    private constructor(private readonly connection: ProtocolBroadcastConnection, public readonly id: string) { }
+    private constructor(private readonly connection: ProtocolBroadcastConnection, public readonly id: string) {
+        // @ts-ignore Detect disconnection immediately
+        connection.options.transport.socket.on('disconnect', _ => this.onDisconnect(this));
+    }
     
-    public static async fromConnection(connection: ProtocolBroadcastConnection, roomId: string): Promise<OctRoomInstance> {
-        const instance = new OctRoomInstance(connection, roomId);
+    public static async fromConnection(connection: ProtocolBroadcastConnection, roomId: string): Promise<CollaborationRoom> {
+        const instance = new CollaborationRoom(connection, roomId);
         await instance.init();
         return instance;
     }
@@ -29,6 +33,7 @@ export default class OctRoomInstance {
         await this.registerFileEvents();
         this.initTerminals();
     }
+
     initTerminals() {
         // initialize shared map
         const yTerminals = this.yjs.getMap<boolean>('terminals');

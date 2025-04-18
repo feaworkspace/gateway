@@ -1,5 +1,5 @@
 import { ConnectionProvider, Deferred, SocketIoTransportProvider } from 'open-collaboration-protocol';
-import OctRoomInstance from '../domain/collaboration/OctRoomInstance';
+import CollaborationRoom from '../domain/collaboration/CollaborationRoom';
 import { OCT_SERVER_URL } from '../Settings';
 import JwtService from './JwtService';
 import { Singleton, Startup } from 'tydi';
@@ -10,7 +10,7 @@ export default class CollaborationService {
 
     private authHandler: ConnectionProvider;
 
-    private room: Deferred<OctRoomInstance> = new Deferred();
+    private room: Deferred<CollaborationRoom> = new Deferred();
 
     @Startup
     public async init() {
@@ -37,18 +37,34 @@ export default class CollaborationService {
         
         const room = await this.createRoom();
         this.room.resolve(room);
+        room.onDisconnect = this.onRoomDisconnected.bind(this);
+    }
+
+    private async onRoomDisconnected(room: CollaborationRoom) {
+        console.log("[Collaboration] Room " + room.id + " disconnected. Recreating one...");
+
+        const newRoom = await this.createRoom();
+        this.room.resolve(newRoom);
+        newRoom.onDisconnect = this.onRoomDisconnected.bind(this);
     }
 
     private async createRoom() {
-        const roomClaim = await this.authHandler.createRoom({
-            reporter: info => console.log("[OCT]", info),
-            // abortSignal: tokens => console.log("[OCT] Room creation aborted", tokens),
-        });
-        console.log("[OCT] Room created", roomClaim);
+        while(true) {
+            try {
+                const roomClaim = await this.authHandler.createRoom({
+                    reporter: info => console.log("[OCT]", info),
+                    // abortSignal: tokens => console.log("[OCT] Room creation aborted", tokens),
+                });
+                console.log("[OCT] Room created", roomClaim);
 
-        const connection = await this.authHandler.connect(roomClaim.roomToken);
+                const connection = await this.authHandler.connect(roomClaim.roomToken);
 
-        return await OctRoomInstance.fromConnection(connection, roomClaim.roomId);
+                return await CollaborationRoom.fromConnection(connection, roomClaim.roomId);
+            }catch(e) {
+                console.warn("Open Collaboration Server not available. Retrying in 10 seconds...");
+                await new Promise((resolve) => setTimeout(resolve, 10000));
+            }
+        }
 
         // connection.peer.onJoinRequest = async (peerId, accept) => {
         //     console.log("[OCT] Peer join request", peerId);
