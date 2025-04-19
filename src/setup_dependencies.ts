@@ -57,5 +57,4 @@ authController_6.init();
 collaborationController_10.init();
 frontendController_12.init();
 collaborationService_21.init();
-userService_24.refreshUsers();
 userRepository_25.init();

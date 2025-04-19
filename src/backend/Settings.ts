@@ -12,7 +12,7 @@ export const ROUTES = (JSON.parse(process.env["ROUTES"] || "[]") as RouteConfig[
     }
     return b.host.length - a.host.length;
   });
-export const WORKSPACE_NAME = process.env["WORKSPACE_NAME"] ?? "workspace";
+export const WORKSPACE_NAME = process.env["WORKSPACE_NAME"] ?? "local";
 export const OCT_JWT_PRIVATE_KEY = process.env.OCT_JWT_PRIVATE_KEY;
 export const PROTOCOL = IS_LOCALHOST ? "http" : "https";
 export const CORS_ALLOWED_ORIGINS = [PROTOCOL + "://" + HOSTNAME, PROTOCOL + "://" + THEIA_HOSTNAME];
