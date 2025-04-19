@@ -104,6 +104,7 @@ export default class CollaborationRoom {
                 this.lastWrite.set(path, new Date().getTime());
                 fs.watch(root(path)).on("change", async () => {
                     const delta = new Date().getTime() - this.lastWrite.get(path)!;
+                    console.log("change", path, delta);
                     if(delta > 1000) {
                         try {
                             const text = await (await fs.promises.readFile(root(path))).toString('utf-8');
