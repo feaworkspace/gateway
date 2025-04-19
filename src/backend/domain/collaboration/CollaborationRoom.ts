@@ -5,6 +5,7 @@ import * as fpath from 'path';
 import * as fs from 'fs';
 import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
+import Author from "./Author";
 
 export default class CollaborationRoom {
     protected peers = new Map<string, Peer>();
@@ -12,13 +13,13 @@ export default class CollaborationRoom {
     private yjsProvider: OpenCollaborationYjsProvider;
     protected yjs = new Y.Doc();
     protected yjsAwareness = new awarenessProtocol.Awareness(this.yjs);
-    public onDisconnect = (room: CollaborationRoom) => {};
+    public onDisconnect = (room: CollaborationRoom) => { };
 
     private constructor(private readonly connection: ProtocolBroadcastConnection, public readonly id: string) {
         // @ts-ignore Detect disconnection immediately
         connection.options.transport.socket.on('disconnect', _ => this.onDisconnect(this));
     }
-    
+
     public static async fromConnection(connection: ProtocolBroadcastConnection, roomId: string): Promise<CollaborationRoom> {
         const instance = new CollaborationRoom(connection, roomId);
         await instance.init();
@@ -60,7 +61,7 @@ export default class CollaborationRoom {
                 host: await this.identity.promise,
                 guests: Array.from(this.peers.values()),
                 capabilities: {},
-                permissions: {readonly: false},
+                permissions: { readonly: false },
                 workspace: {
                     name: "Project",
                     folders: ["workspace"]
@@ -93,7 +94,7 @@ export default class CollaborationRoom {
             console.log('[OCT] Open editor', path);
             const unknownModel = !this.yjs.share.has(path);
             const ytext = this.yjs.getText(path);
-            if(unknownModel) {
+            if (unknownModel) {
                 const text = await (await fs.promises.readFile(root(path))).toString('utf-8');
                 this.yjs.transact(() => {
                     ytext.delete(0, ytext.length);
@@ -102,10 +103,74 @@ export default class CollaborationRoom {
             }
         });
 
+        this.connection.fs.onWriteFile(async (peer, path, data) => {
+            const author = this.peers.get(peer);
+            if (!author) return;
+
+            console.log(author.name, "write file", path);
+
+            path = root(path);
+
+            const repositoryPath = await findGitRepository(path);
+            console.log("Found repository", repositoryPath);
+            if (!repositoryPath) return;
+
+            await writeCommitMsgHook(repositoryPath);
+
+            const authorsFilePath = fpath.join(repositoryPath, ".git", "authors.json");
+            let authors: Array<Author> = [];
+            try {
+                authors = JSON.parse((await fs.promises.readFile(authorsFilePath)).toString('utf-8'));
+            } catch (e) { }
+            authors.push({ name: author.name, email: author.email! });
+            authors = authors.filter((current, index, arr) => arr.findIndex(e => e.name === current.name && e.email === current.email) === index);
+
+            await fs.promises.writeFile(authorsFilePath, JSON.stringify(authors));
+        });
         // Others event are handled by default Theia RemoteFileSystem
     }
 }
 
 function root(path: string): string {
     return fpath.join("/", path);
+}
+
+async function findGitRepository(path: string): Promise<string | undefined> {
+    const stat = await fs.promises.stat(path);
+    if (stat.isDirectory()) {
+        path = fpath.dirname(path);
+    }
+    while (path !== fpath.dirname(path)) {
+        try {
+            const dotGitFile = await fs.promises.stat(fpath.join(path, ".git"));
+            if (dotGitFile.isDirectory()) {
+                return path;
+            }
+        } catch (e) {
+            // .git not found
+            path = fpath.dirname(path);
+        }
+    }
+}
+
+async function writeCommitMsgHook(repositoryPath: string) {
+    const commitMsgPath = fpath.resolve(repositoryPath, ".git", "hooks", "commit-msg");
+    try {
+        await fs.promises.stat(commitMsgPath);
+    } catch (e) {
+        await fs.promises.writeFile(commitMsgPath, `
+#!/bin/sh
+
+set -e
+
+authors=$(jq -c '.[]' .git/authors.json)
+echo "" >> $1
+for author in $authors; do
+	name=$(echo "$author" | jq -c -r '.name')
+	email=$(echo "$author" | jq -c -r '.email')
+	echo "Co-authored-by: $name <$email>" >> $1
+done
+`);
+        await fs.promises.chmod(commitMsgPath, 0o755);
+    }
 }
