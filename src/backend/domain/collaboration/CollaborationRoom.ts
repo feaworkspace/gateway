@@ -13,6 +13,7 @@ export default class CollaborationRoom {
     private yjsProvider: OpenCollaborationYjsProvider;
     protected yjs = new Y.Doc();
     protected yjsAwareness = new awarenessProtocol.Awareness(this.yjs);
+    protected lastWrite: Map<string, number> = new Map();
     public onDisconnect = (room: CollaborationRoom) => { };
 
     private constructor(private readonly connection: ProtocolBroadcastConnection, public readonly id: string) {
@@ -100,10 +101,27 @@ export default class CollaborationRoom {
                     ytext.delete(0, ytext.length);
                     ytext.insert(0, text);
                 });
+                this.lastWrite.set(path, new Date().getTime());
+                fs.watch(root(path)).on("change", async () => {
+                    const delta = new Date().getTime() - this.lastWrite.get(path)!;
+                    if(delta > 1000) {
+                        try {
+                            const text = await (await fs.promises.readFile(root(path))).toString('utf-8');
+                            this.yjs.transact(() => {
+                                ytext.delete(0, ytext.length);
+                                ytext.insert(0, text);
+                            });
+                        }catch(e) {
+                            console.error(e);
+                        }
+                    }
+                 });
             }
         });
 
         this.connection.fs.onWriteFile(async (peer, path, data) => {
+            this.lastWrite.set(path, new Date().getTime());
+
             const author = this.peers.get(peer);
             if (!author) return;
 
