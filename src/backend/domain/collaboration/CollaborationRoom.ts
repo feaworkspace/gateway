@@ -5,6 +5,7 @@ import * as fpath from 'path';
 import * as fs from 'fs';
 import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
+import * as watcher from "@parcel/watcher";
 import Author from "./Author";
 
 export default class CollaborationRoom {
@@ -13,7 +14,7 @@ export default class CollaborationRoom {
     private yjsProvider: OpenCollaborationYjsProvider;
     protected yjs = new Y.Doc();
     protected yjsAwareness = new awarenessProtocol.Awareness(this.yjs);
-    protected lastWrite: Map<string, number> = new Map();
+    protected lastUserWrites: Map<string, number> = new Map();
     public onDisconnect = (room: CollaborationRoom) => { };
 
     private constructor(private readonly connection: ProtocolBroadcastConnection, public readonly id: string) {
@@ -91,37 +92,50 @@ export default class CollaborationRoom {
     }
 
     private registerFileEvents() {
+        const resetFile = async (path: string) => {
+            const ytext = this.yjs.getText(path);
+            const text = await (await fs.promises.readFile(root(path))).toString('utf-8');
+            this.yjs.transact(() => {
+                ytext.delete(0, ytext.length);
+                ytext.insert(0, text);
+            });
+        }
+
+        console.log("[Watching DIR]");
+        watcher.subscribe("/workspace", (err, events) => {
+            console.log("last writes", this.lastUserWrites);
+            for(const { path, type } of events) {
+                const normalizedPath = path.replace(/^[^\\\/]*([\\\/])/, "$1");
+                const theiaPath = normalizedPath.substring(1).replaceAll("\\", "/");
+                console.log("event ", path, normalizedPath, theiaPath);
+                const lastWriteTime = this.lastUserWrites.get(normalizedPath);
+                if(!lastWriteTime || type !== "update") continue;
+
+                console.log("found file");
+
+                const delta = new Date().getTime() - lastWriteTime;
+
+                if(delta > 1000) {
+                    try {
+                        resetFile(theiaPath);
+                    }catch(e) {
+                        console.error(e);
+                    }
+                }
+            }
+        });
+
         this.connection.editor.onOpen(async (_, path) => {
             console.log('[OCT] Open editor', path);
             const unknownModel = !this.yjs.share.has(path);
-            const ytext = this.yjs.getText(path);
             if (unknownModel) {
-                const text = await (await fs.promises.readFile(root(path))).toString('utf-8');
-                this.yjs.transact(() => {
-                    ytext.delete(0, ytext.length);
-                    ytext.insert(0, text);
-                });
-                this.lastWrite.set(path, new Date().getTime());
-                fs.watch(root(path)).on("change", async () => {
-                    const delta = new Date().getTime() - this.lastWrite.get(path)!;
-                    console.log("change", path, delta);
-                    if(delta > 1000) {
-                        try {
-                            const text = await (await fs.promises.readFile(root(path))).toString('utf-8');
-                            this.yjs.transact(() => {
-                                ytext.delete(0, ytext.length);
-                                ytext.insert(0, text);
-                            });
-                        }catch(e) {
-                            console.error(e);
-                        }
-                    }
-                 });
+                await resetFile(path);
+                this.lastUserWrites.set(root(path), new Date().getTime());
             }
         });
 
         this.connection.fs.onWriteFile(async (peer, path, data) => {
-            this.lastWrite.set(path, new Date().getTime());
+            this.lastUserWrites.set(root(path), new Date().getTime());
 
             const author = this.peers.get(peer);
             if (!author) return;
