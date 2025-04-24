@@ -127,12 +127,12 @@ export default class CollaborationRoom {
             const unknownModel = !this.yjs.share.has(path);
             if (unknownModel) {
                 await resetFile(path);
-                this.lastUserWrites.set(root(path), new Date().getTime());
+                this.lastUserWrites.set(path, new Date().getTime());
             }
         });
 
         this.connection.fs.onWriteFile(async (peer, path, data) => {
-            this.lastUserWrites.set(root(path), new Date().getTime());
+            this.lastUserWrites.set(path, new Date().getTime());
 
             const author = this.peers.get(peer);
             if (!author) return;
