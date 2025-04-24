@@ -153,6 +153,7 @@ export default class CollaborationRoom {
             authors = authors.filter((current, index, arr) => arr.findIndex(e => e.name === current.name && e.email === current.email) === index);
 
             await fs.promises.writeFile(authorsFilePath, JSON.stringify(authors));
+            await fs.promises.writeFile(path, data.content);
         });
         // Others event are handled by default Theia RemoteFileSystem
     }
