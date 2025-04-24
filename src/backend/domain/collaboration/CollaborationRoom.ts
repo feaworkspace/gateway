@@ -93,6 +93,7 @@ export default class CollaborationRoom {
 
     private registerFileEvents() {
         const resetFile = async (path: string) => {
+            console.log("Reset file", path);
             const ytext = this.yjs.getText(path);
             const text = await (await fs.promises.readFile(root(path))).toString('utf-8');
             this.yjs.transact(() => {
@@ -103,15 +104,11 @@ export default class CollaborationRoom {
 
         console.log("[Watching DIR]");
         watcher.subscribe("/workspace", (err, events) => {
-            console.log("last writes", this.lastUserWrites);
             for(const { path, type } of events) {
                 const normalizedPath = path.replace(/^[^\\\/]*([\\\/])/, "$1");
                 const theiaPath = normalizedPath.substring(1).replaceAll("\\", "/");
-                console.log("event ", path, normalizedPath, theiaPath);
                 const lastWriteTime = this.lastUserWrites.get(normalizedPath);
                 if(!lastWriteTime || type !== "update") continue;
-
-                console.log("found file");
 
                 const delta = new Date().getTime() - lastWriteTime;
 
@@ -140,12 +137,9 @@ export default class CollaborationRoom {
             const author = this.peers.get(peer);
             if (!author) return;
 
-            console.log(author.name, "write file", path);
-
             path = root(path);
 
             const repositoryPath = await findGitRepository(path);
-            console.log("Found repository", repositoryPath);
             if (!repositoryPath) return;
 
             await writeCommitMsgHook(repositoryPath);

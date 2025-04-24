@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import { PORT, ROUTES } from '../Settings';
+import { DEBUG, PORT, ROUTES } from '../Settings';
 import fullUrl from '../utils/fullUrl';
 import App from '../App';
 import { Priority, Singleton, Startup } from 'tydi';
@@ -31,10 +31,10 @@ export default class ProxyMiddleware {
 
     private async handleProxy(req: Request, res: Response, next) {
         if(res.locals.proxy) {
-            console.log("PROXYING", fullUrl(req));
+            DEBUG && console.log("PROXYING", fullUrl(req));
             return this.proxy(req, res, next);
         } else {
-            console.log("NOT PROXYING", fullUrl(req));
+            DEBUG && console.log("NOT PROXYING", fullUrl(req));
             next();
         }
 

@@ -17,3 +17,4 @@ export const OCT_JWT_PRIVATE_KEY = process.env.OCT_JWT_PRIVATE_KEY;
 export const PROTOCOL = IS_LOCALHOST ? "http" : "https";
 export const CORS_ALLOWED_ORIGINS = [PROTOCOL + "://" + HOSTNAME, PROTOCOL + "://" + THEIA_HOSTNAME];
 export const OCT_SERVER_URL = process.env["OCT_SERVER_URL"] ?? "http://127.0.0.1:8100";
+export const DEBUG = JSON.parse(process.env["DEBUG"] ?? "false");
