@@ -134,25 +134,27 @@ export default class CollaborationRoom {
         this.connection.fs.onWriteFile(async (peer, path, data) => {
             this.lastUserWrites.set(path, new Date().getTime());
 
-            const author = this.peers.get(peer);
-            if (!author) return;
-
             path = root(path);
 
-            const repositoryPath = await findGitRepository(path);
-            if (!repositoryPath) return;
+            const author = this.peers.get(peer);
 
-            await writeCommitMsgHook(repositoryPath);
-
-            const authorsFilePath = fpath.join(repositoryPath, ".git", "authors.json");
-            let authors: Array<Author> = [];
             try {
-                authors = JSON.parse((await fs.promises.readFile(authorsFilePath)).toString('utf-8'));
-            } catch (e) { }
-            authors.push({ name: author.name, email: author.email! });
-            authors = authors.filter((current, index, arr) => arr.findIndex(e => e.name === current.name && e.email === current.email) === index);
+                const repositoryPath = await findGitRepository(path);
+                if (repositoryPath && author) {
+                    await writeCommitMsgHook(repositoryPath);
 
-            await fs.promises.writeFile(authorsFilePath, JSON.stringify(authors));
+                    const authorsFilePath = fpath.join(repositoryPath, ".git", "authors.json");
+                    let authors: Array<Author> = [];
+                    try {
+                        authors = JSON.parse((await fs.promises.readFile(authorsFilePath)).toString('utf-8'));
+                    } catch (e) { }
+                    authors.push({ name: author.name, email: author.email! });
+                    authors = authors.filter((current, index, arr) => arr.findIndex(e => e.name === current.name && e.email === current.email) === index);
+
+                    await fs.promises.writeFile(authorsFilePath, JSON.stringify(authors));
+                }
+            }catch(e) {
+            }
             await fs.promises.writeFile(path, data.content);
         });
         // Others event are handled by default Theia RemoteFileSystem
