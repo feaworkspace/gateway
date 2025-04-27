@@ -7,6 +7,7 @@ import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import * as watcher from "@parcel/watcher";
 import Author from "./Author";
+import { DEBUG } from "../../Settings";
 
 export default class CollaborationRoom {
     protected peers = new Map<string, Peer>();
@@ -108,6 +109,7 @@ export default class CollaborationRoom {
                 const normalizedPath = path.replace(/^[^\\\/]*([\\\/])/, "$1");
                 const theiaPath = normalizedPath.substring(1).replaceAll("\\", "/");
                 const lastWriteTime = this.lastUserWrites.get(normalizedPath);
+                DEBUG && console.log("File change", type, path, normalizedPath, theiaPath, lastWriteTime);
                 if(!lastWriteTime || type !== "update") continue;
 
                 const delta = new Date().getTime() - lastWriteTime;
