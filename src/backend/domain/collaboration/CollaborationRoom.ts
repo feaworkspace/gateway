@@ -108,7 +108,7 @@ export default class CollaborationRoom {
             for(const { path, type } of events) {
                 const normalizedPath = path.replace(/^[^\\\/]*([\\\/])/, "$1");
                 const theiaPath = normalizedPath.substring(1).replaceAll("\\", "/");
-                const lastWriteTime = this.lastUserWrites.get(normalizedPath);
+                const lastWriteTime = this.lastUserWrites.get(theiaPath);
                 DEBUG && console.log("File change", type, path, normalizedPath, theiaPath, lastWriteTime);
                 if(!lastWriteTime || type !== "update") continue;
 
