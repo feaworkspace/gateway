@@ -12,8 +12,8 @@ export default class JwtService {
         return Buffer.from(key);
     }
 
-    protected async getJwtExpiration(): Promise<string | number | undefined> {
-        return undefined;
+    protected async getJwtExpiration(): Promise<number | undefined> {
+        return 1000 * 60 * 60 * 24 * 30; // 30 days
     }
 
     public async createJwt(payload: object): Promise<string> {
@@ -25,7 +25,7 @@ export default class JwtService {
             .setProtectedHeader({ alg: 'HS256' })
             .setIssuedAt();
         if (expiration !== undefined) {
-            signJwt.setExpirationTime(expiration);
+            signJwt.setExpirationTime(new Date().getTime() + expiration);
         }
         return signJwt.sign(key);
     }
